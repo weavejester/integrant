@@ -25,3 +25,6 @@
 
 (defn read-string [s]
   (edn/read-string {:readers {'ref ref}} s))
+
+(defn expand [m]
+  (walk/postwalk #(if (ref? %) (m (:key %)) %) m))
