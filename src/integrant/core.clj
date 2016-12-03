@@ -26,5 +26,27 @@
 (defn read-string [s]
   (edn/read-string {:readers {'ref ref}} s))
 
-(defn expand [m]
-  (walk/postwalk #(if (ref? %) (m (:key %)) %) m))
+(defn expand
+  ([m]
+   (reduce expand m (keys m)))
+  ([m k]
+   (let [v (m k)]
+     (walk/postwalk #(if (and (ref? %) (= k (:key %))) v %) m))))
+
+(defmulti start (fn [k v] k))
+
+(defmethod start :default [_ v] v)
+
+(defn- run-key [m k]
+  (-> m
+      (update k #(start k %))
+      (expand k)))
+
+(defn- sort-keys [ks m]
+  (sort (dep/topo-comparator (dependencies m)) ks))
+
+(defn run
+  ([m]
+   (run m (keys m)))
+  ([m ks]
+   (reduce run-key m (sort-keys ks m))))
