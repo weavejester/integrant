@@ -7,7 +7,7 @@
 (defrecord Ref [key])
 
 (defn ref [key]
-  {:pre [(keyword? key) (namespace key)]}
+  {:pre [(keyword? key)]}
   (->Ref key))
 
 (defn ref? [x]
