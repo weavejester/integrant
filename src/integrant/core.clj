@@ -50,3 +50,16 @@
    (run m (keys m)))
   ([m ks]
    (reduce run-key m (sort-keys ks m))))
+
+(defmulti stop (fn [k v] k))
+
+(defmethod stop :default [_ v] v)
+
+(defn- halt-key [m k]
+  (update m k #(stop k %)))
+
+(defn halt
+  ([m]
+   (halt m (keys m)))
+  ([m ks]
+   (reduce halt-key m (reverse (sort-keys ks m)))))
