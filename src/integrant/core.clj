@@ -19,7 +19,7 @@
     (coll? v) (mapcat find-refs v)))
 
 (defn valid? [m]
-  (every? (-> m keys set) (find-refs m)))
+  (and (map? m) (every? (-> m keys set) (find-refs m))))
 
 (defn dependencies [m]
   (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
@@ -55,11 +55,16 @@
    (run m (keys m)))
   ([m ks]
    {:pre [(valid? m)]}
-   (reduce update-key m (sort-keys ks m))))
+   (-> (reduce update-key m (sort-keys ks m))
+       (with-meta {::config m}))))
+
+(defn running? [m]
+  (-> m meta ::config valid?))
 
 (defn halt!
   ([m]
    (halt! m (keys m)))
   ([m ks]
-   (doseq [k (reverse (sort-keys ks m))]
+   {:pre [(running? m)]}
+   (doseq [k (reverse (sort-keys ks (-> m meta ::config)))]
      (halt-key! k (m k)))))
