@@ -18,6 +18,9 @@
     (ref? v)  (list (:key v))
     (coll? v) (mapcat find-refs v)))
 
+(defn valid? [m]
+  (every? (-> m keys set) (find-refs m)))
+
 (defn dependencies [m]
   (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
              (dep/graph)
@@ -51,6 +54,7 @@
   ([m]
    (run m (keys m)))
   ([m ks]
+   {:pre [(valid? m)]}
    (reduce update-key m (sort-keys ks m))))
 
 (defn halt!
