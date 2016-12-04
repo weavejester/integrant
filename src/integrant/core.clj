@@ -51,15 +51,13 @@
   ([m ks]
    (reduce run-key m (sort-keys ks m))))
 
-(defmulti -halt (fn [k v] k))
+(defmulti -halt! (fn [k v] k))
 
-(defmethod -halt :default [_ v] v)
+(defmethod -halt! :default [_ v] v)
 
-(defn- halt-key [m k]
-  (update m k #(-halt k %)))
-
-(defn halt
+(defn halt!
   ([m]
-   (halt m (keys m)))
+   (halt! m (keys m)))
   ([m ks]
-   (reduce halt-key m (reverse (sort-keys ks m)))))
+   (doseq [k (reverse (sort-keys ks m))]
+     (-halt! k (m k)))))
