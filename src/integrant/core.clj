@@ -33,31 +33,29 @@
    (let [v (m k)]
      (walk/postwalk #(if (and (ref? %) (= k (:key %))) v %) m))))
 
-(defmulti -run (fn [k v] k))
+(defmulti run-key (fn [k v] k))
 
-(defmethod -run :default [_ v] v)
+(defmethod run-key :default [_ v] v)
 
-(defn- run-key [m k]
-  (-> m
-      (update k #(-run k %))
-      (expand k)))
+(defmulti halt-key! (fn [k v] k))
+
+(defmethod halt-key! :default [_ v])
 
 (defn- sort-keys [ks m]
   (sort (dep/topo-comparator (dependencies m)) ks))
+
+(defn- update-key [m k]
+  (-> m (update k (partial run-key k)) (expand k)))
 
 (defn run
   ([m]
    (run m (keys m)))
   ([m ks]
-   (reduce run-key m (sort-keys ks m))))
-
-(defmulti -halt! (fn [k v] k))
-
-(defmethod -halt! :default [_ v] v)
+   (reduce update-key m (sort-keys ks m))))
 
 (defn halt!
   ([m]
    (halt! m (keys m)))
   ([m ks]
    (doseq [k (reverse (sort-keys ks m))]
-     (-halt! k (m k)))))
+     (halt-key! k (m k)))))
