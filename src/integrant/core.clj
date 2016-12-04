@@ -33,13 +33,13 @@
    (let [v (m k)]
      (walk/postwalk #(if (and (ref? %) (= k (:key %))) v %) m))))
 
-(defmulti start (fn [k v] k))
+(defmulti -run (fn [k v] k))
 
-(defmethod start :default [_ v] v)
+(defmethod -run :default [_ v] v)
 
 (defn- run-key [m k]
   (-> m
-      (update k #(start k %))
+      (update k #(-run k %))
       (expand k)))
 
 (defn- sort-keys [ks m]
@@ -51,12 +51,12 @@
   ([m ks]
    (reduce run-key m (sort-keys ks m))))
 
-(defmulti stop (fn [k v] k))
+(defmulti -halt (fn [k v] k))
 
-(defmethod stop :default [_ v] v)
+(defmethod -halt :default [_ v] v)
 
 (defn- halt-key [m k]
-  (update m k #(stop k %)))
+  (update m k #(-halt k %)))
 
 (defn halt
   ([m]
