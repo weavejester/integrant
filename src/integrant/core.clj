@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [ref read-string])
   (:require [com.stuartsierra.dependency :as dep]
             [clojure.edn :as edn]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [clojure.string :as str]))
 
 (defrecord Ref [key])
 
@@ -18,8 +19,8 @@
     (ref? v)  (list (:key v))
     (coll? v) (mapcat find-refs v)))
 
-(defn valid? [m]
-  (every? (-> m keys set) (find-refs m)))
+(defn- missing-refs [m]
+  (remove (-> m keys set) (find-refs m)))
 
 (defn dependencies [m]
   (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
@@ -54,7 +55,12 @@
   ([m]
    (run m (keys m)))
   ([m ks]
-   {:pre [(map? m) (valid? m)]}
+   {:pre [(map? m)]}
+   (when-let [refs (seq (missing-refs m))]
+     (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
+                     {:reason ::missing-refs
+                      :config m
+                      :missing-refs refs})))
    (-> (reduce update-key m (sort-keys ks m))
        (with-meta {::origin m}))))
 
