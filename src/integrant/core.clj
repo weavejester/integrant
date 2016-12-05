@@ -76,9 +76,9 @@
   (-> m (update k (partial init-key k)) (expand-1 k)))
 
 (defn init
-  "Turn a config map into an implementation map. Keys are traversed in
-  dependency order, initiated via the init-key multimethod, then the refs
-  associated with the key are expanded."
+  "Turn a config map into an system map. Keys are traversed in
+  dependency order, initiated via the init-key multimethod, then the
+  refs associated with the key are expanded."
   ([config]
    (init config (keys config)))
   ([config keys]
@@ -92,10 +92,10 @@
        (with-meta {::origin config}))))
 
 (defn halt!
-  "Halt an implementation map by applying halt-key! in dependency order."
-  ([impl]
-   (halt! impl (keys impl)))
-  ([impl keys]
-   {:pre [(map? impl) (-> impl meta ::origin)]}
-   (doseq [k (reverse (sort-keys keys (-> impl meta ::origin)))]
-     (halt-key! k (impl k)))))
+  "Halt an system map by applying halt-key! in dependency order."
+  ([system]
+   (halt! system (keys system)))
+  ([system keys]
+   {:pre [(map? system) (-> system meta ::origin)]}
+   (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
+     (halt-key! k (system k)))))
