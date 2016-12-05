@@ -26,7 +26,7 @@
 (defn- missing-refs [config]
   (remove (-> config keys set) (find-refs config)))
 
-(defn dependencies
+(defn dependency-graph
   "Return a dependency graph of all the refs in a config."
   [config]
   (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
@@ -64,7 +64,7 @@
 (defmethod halt-key! :default [_ v])
 
 (defn- sort-keys [ks m]
-  (sort (dep/topo-comparator (dependencies m)) ks))
+  (sort (dep/topo-comparator (dependency-graph m)) ks))
 
 (defn- update-key [m k]
   (-> m (update k (partial run-key k)) (expand k)))
