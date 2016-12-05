@@ -76,13 +76,13 @@ goes:
 
 ```clojure
 (def system
-  (init config))
+  (ig/init config))
 ```
 
 When a system needs to be shut down, `halt!` is used:
 
 ```clojure
-(halt! system)
+(ig/halt! system)
 ```
 
 Unlike Component, `halt!` is entirely side-effectful. The return value
