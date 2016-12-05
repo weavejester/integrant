@@ -7,11 +7,15 @@
 
 (defrecord Ref [key])
 
-(defn ref [key]
+(defn ref
+  "Create a reference to a top-level key in a config map."
+  [key]
   {:pre [(keyword? key)]}
   (->Ref key))
 
-(defn ref? [x]
+(defn ref?
+  "Return true if its argument is a ref."
+  [x]
   (instance? Ref x))
 
 (defn- find-refs [v]
@@ -19,29 +23,43 @@
     (ref? v)  (list (:key v))
     (coll? v) (mapcat find-refs v)))
 
-(defn- missing-refs [m]
-  (remove (-> m keys set) (find-refs m)))
+(defn- missing-refs [config]
+  (remove (-> config keys set) (find-refs config)))
 
-(defn dependencies [m]
+(defn dependencies
+  "Return a dependency graph of all the refs in a config."
+  [config]
   (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
              (dep/graph)
-             m))
+             config))
 
-(defn read-string [s]
+(defn read-string
+  "Read a config from a string of edn. Refs may be denotied by tagging keywords
+  with #ref."
+  [s]
   (edn/read-string {:readers {'ref ref}} s))
 
 (defn expand
+  "Replace all refs with the values they correspond to."
   ([m]
    (reduce expand m (keys m)))
   ([m k]
    (let [v (m k)]
      (walk/postwalk #(if (and (ref? %) (= k (:key %))) v %) m))))
 
-(defmulti run-key (fn [k v] k))
+(defmulti run-key
+  "Turn a config value associated with a key into a running implementation. For
+  example, a database URL might be turned into a database connection."
+  (fn [k v] k))
 
 (defmethod run-key :default [_ v] v)
 
-(defmulti halt-key! (fn [k v] k))
+(defmulti halt-key!
+  "Halt a running implementation associated with a key. This is often used for
+  stopping processes or cleaning up resources. For example, a database
+  connection might be closed. The return value of this multimethod is
+  discarded."
+  (fn [k v] k))
 
 (defmethod halt-key! :default [_ v])
 
@@ -52,25 +70,30 @@
   (-> m (update k (partial run-key k)) (expand k)))
 
 (defn run
-  ([m]
-   (run m (keys m)))
-  ([m ks]
+  "Turn a config map into an implementation map. Keys are run via run-key in
+  dependency order, then the refs associated with the key are expanded."
+  ([config]
+   (run config (keys config)))
+  ([config keys]
    {:pre [(map? m)]}
-   (when-let [refs (seq (missing-refs m))]
+   (when-let [refs (seq (missing-refs config))]
      (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
                      {:reason ::missing-refs
-                      :config m
+                      :config config
                       :missing-refs refs})))
-   (-> (reduce update-key m (sort-keys ks m))
-       (with-meta {::origin m}))))
+   (-> (reduce update-key config (sort-keys keys config))
+       (with-meta {::origin config}))))
 
-(defn running? [m]
-  (contains? (meta m) ::origin))
+(defn running?
+  "Return true if its argument is a running implementation map."
+  [impl]
+  (contains? (meta impl) ::origin))
 
 (defn halt!
-  ([m]
-   (halt! m (keys m)))
-  ([m ks]
-   {:pre [(map? m) (running? m)]}
-   (doseq [k (reverse (sort-keys ks (-> m meta ::origin)))]
-     (halt-key! k (m k)))))
+  "Halt an implementation map by applying halt-key! in dependency order."
+  ([impl]
+   (halt! impl (keys impl)))
+  ([impl keys]
+   {:pre [(map? impl) (running? impl)]}
+   (doseq [k (reverse (sort-keys keys (-> impl meta ::origin)))]
+     (halt-key! k (impl k)))))
