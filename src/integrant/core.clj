@@ -53,12 +53,12 @@
   ([config keys]
    (reduce expand-1 config keys)))
 
-(defmulti run-key
-  "Turn a config value associated with a key into a running implementation. For
-  example, a database URL might be turned into a database connection."
+(defmulti init-key
+  "Turn a config value associated with a key into a concrete implementation.
+  For example, a database URL might be turned into a database connection."
   (fn [k v] k))
 
-(defmethod run-key :default [_ v] v)
+(defmethod init-key :default [_ v] v)
 
 (defmulti halt-key!
   "Halt a running implementation associated with a key. This is often used for
@@ -73,13 +73,14 @@
   (sort (dep/topo-comparator (dependency-graph m)) ks))
 
 (defn- update-key [m k]
-  (-> m (update k (partial run-key k)) (expand-1 k)))
+  (-> m (update k (partial init-key k)) (expand-1 k)))
 
-(defn run
-  "Turn a config map into an implementation map. Keys are run via run-key in
-  dependency order, then the refs associated with the key are expanded."
+(defn init
+  "Turn a config map into an implementation map. Keys are traversed in
+  dependency order, initiated via the init-key multimethod, then the refs
+  associated with the key are expanded."
   ([config]
-   (run config (keys config)))
+   (init config (keys config)))
   ([config keys]
    {:pre [(map? m)]}
    (when-let [refs (seq (missing-refs config))]
@@ -90,16 +91,11 @@
    (-> (reduce update-key config (sort-keys keys config))
        (with-meta {::origin config}))))
 
-(defn running?
-  "Return true if its argument is a running implementation map."
-  [impl]
-  (contains? (meta impl) ::origin))
-
 (defn halt!
   "Halt an implementation map by applying halt-key! in dependency order."
   ([impl]
    (halt! impl (keys impl)))
   ([impl keys]
-   {:pre [(map? impl) (running? impl)]}
+   {:pre [(map? impl) (-> impl meta ::origin)]}
    (doseq [k (reverse (sort-keys keys (-> impl meta ::origin)))]
      (halt-key! k (impl k)))))
