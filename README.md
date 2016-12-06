@@ -2,10 +2,13 @@
 
 Integrant is a Clojure micro-framework for building applications with
 data-driven architecture. It can be thought of as an alternative
-to [Component][] or [Mount][].
+to [Component][] or [Mount][], and was inspired by [Arachne][] and by
+through work on [Duct][].
 
 [component]: https://github.com/stuartsierra/component
 [mount]: https://github.com/tolitius/mount
+[arachne]: http://arachne-framework.org/
+[duct]: https://github.com/duct-framework/duct
 
 ## Rationale
 
