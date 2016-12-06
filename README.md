@@ -79,7 +79,7 @@ initialize a key:
          '[ring.util.response :as resp])
 
 (defmethod ig/init-key :adapter/jetty [_ {:keys [handler] :as opts}]
-  (jetty/run-jetty handler (-> opts (dissoc :handler) (assoc :join? false)))
+  (jetty/run-jetty handler (-> opts (dissoc :handler) (assoc :join? false))))
 
 (defmethod ig/init-key :handler/greet [_ {:keys [name]}]
   (fn [_] (resp/response (str "Hello " name))))
