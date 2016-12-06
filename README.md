@@ -35,8 +35,6 @@ In Integrant, anything can be dependent on anything else. The
 dependencies are resolved from the configuration before it's
 initialized into a system.
 
-[duct]: https://github.com/duct-framework/duct
-
 ## Installation
 
 To install, add the following to your project `:dependencies`:
