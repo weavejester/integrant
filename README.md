@@ -9,24 +9,26 @@ or [Mount][].
 
 ## Rationale
 
-Integrant was built as a reaction to two potential weaknesses in
-Component's design.
+Integrant was built as a reaction to fix some perceived weaknesses
+with Component.
 
-The first weakness is that while Component makes use of immutable
-records, it has no direct way to convert a configuration map into a
-running system. Components are typically created through constructor
-functions, and systems created programmatically. Ideally we'd prefer
-to define the architecture of our system through a data structure.
+In Component, systems are created programmatically. Constructor
+functions are used to build records, which are then assembled into
+systems.
 
-The second weakness is that dependencies in a system exist only
-between components, and those dependencies are unordered. If you want
-function to depend on another component, you either have to wrap the
-function in a record, or hard code the dependency outside of the
-system. If you have a list of dependant rules or routes, you need to
-a bespoke way of ordering them.
+In Integrant, systems are created from a configuration data structure,
+typically loaded from an edn resource. The architecture of the
+application is defined through data, rather than code.
 
-Integrant solves both these weaknesses and more, with minimal
-tradeoffs.
+In Component, only records or maps may be components. Anything else
+you might want to have included in the dependency graph, like a
+function, needs to be wrapped in a record.
+
+In Integrant, anything can be dependent on anything else. The
+dependencies are resolved from the configuration before it's initiated
+into a system.
+
+[duct]: https://github.com/duct-framework/duct
 
 ## Installation
 
