@@ -115,8 +115,9 @@ When a system needs to be shut down, `halt!` is used:
 (ig/halt! system)
 ```
 
-Unlike Component, `halt!` is entirely side-effectful. The return value
-should be ignored, and the system structure discarded.
+Like Component, `halt!` shuts down the system in reverse dependency
+order. Unlike Component, `halt!` is entirely side-effectful. The
+return value should be ignored, and the system structure discarded.
 
 ## License
 
