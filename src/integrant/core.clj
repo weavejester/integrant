@@ -82,7 +82,7 @@
   ([config]
    (init config (keys config)))
   ([config keys]
-   {:pre [(map? m)]}
+   {:pre [(map? config)]}
    (when-let [refs (seq (missing-refs config))]
      (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
                      {:reason ::missing-refs
