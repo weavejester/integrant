@@ -1,8 +1,8 @@
 # Integrant
 
-Integrant is a Clojure micro-framework for building data-driven
-systems. It can be thought of as an alternative to [Component][]
-or [Mount][].
+Integrant is a Clojure micro-framework for building applications with
+data-driven architecture. It can be thought of as an alternative
+to [Component][] or [Mount][].
 
 [component]: https://github.com/stuartsierra/component
 [mount]: https://github.com/tolitius/mount
@@ -39,7 +39,7 @@ To install, add the following to your project `:dependencies`:
 ## Usage
 
 Integrant starts with a configuration map. Each top-level key in the
-map represents a configuration that can be turned into a concrete
+map represents a configuration that can be "initiated" into a concrete
 implementation. Configurations can reference other keys via the `ref`
 function.
 
@@ -109,7 +109,7 @@ When a system needs to be shut down, `halt!` is used:
 ```
 
 Unlike Component, `halt!` is entirely side-effectful. The return value
-should be ignored, and the system discarded.
+should be ignored, and the system structure discarded.
 
 ## License
 
