@@ -1,11 +1,32 @@
 # Integrant
 
 Integrant is a Clojure micro-framework for building data-driven
-systems. It can be thought of as an alternative to [Component][].
+systems. It can be thought of as an alternative to [Component][]
 or [Mount][].
 
 [component]: https://github.com/stuartsierra/component
 [mount]: https://github.com/tolitius/mount
+
+## Rationale
+
+Integrant was built as a reaction to two potential weaknesses in
+Component's design.
+
+The first weakness is that while Component makes use of immutable
+records, it has no direct way to convert a configuration map into a
+running system. Components are typically created through constructor
+functions, and systems created programmatically. Ideally we'd prefer
+to define the architecture of our system through a data structure.
+
+The second weakness is that dependencies in a system exist only
+between components, and those dependencies are unordered. If you want
+function to depend on another component, you either have to wrap the
+function in a record, or hard code the dependency outside of the
+system. If you have a list of dependant rules or routes, you need to
+a bespoke way of ordering them.
+
+Integrant solves both these weaknesses and more, with minimal
+tradeoffs.
 
 ## Installation
 
