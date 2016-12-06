@@ -1,5 +1,9 @@
 # Integrant
 
+> integrant /ˈɪntɪɡr(ə)nt/
+>
+> (of parts) making up or contributing to a whole; constituent.
+
 Integrant is a Clojure micro-framework for building applications with
 data-driven architecture. It can be thought of as an alternative
 to [Component][] or [Mount][], and was inspired by [Arachne][] and by
