@@ -41,7 +41,7 @@ initialized into a system.
 
 To install, add the following to your project `:dependencies`:
 
-    [integrant "0.1.0-SNAPSHOT"]
+    [integrant "0.1.0"]
 
 ## Usage
 
