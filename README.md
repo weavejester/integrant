@@ -28,8 +28,8 @@ you might want to have included in the dependency graph, like a
 function, needs to be wrapped in a record.
 
 In Integrant, anything can be dependent on anything else. The
-dependencies are resolved from the configuration before it's initiated
-into a system.
+dependencies are resolved from the configuration before it's
+initialized into a system.
 
 [duct]: https://github.com/duct-framework/duct
 
@@ -42,9 +42,9 @@ To install, add the following to your project `:dependencies`:
 ## Usage
 
 Integrant starts with a configuration map. Each top-level key in the
-map represents a configuration that can be "initiated" into a concrete
-implementation. Configurations can reference other keys via the `ref`
-function.
+map represents a configuration that can be "initialized" into a
+concrete implementation. Configurations can reference other keys via
+the `ref` function.
 
 For example:
 
@@ -72,7 +72,7 @@ And load it with `read-string`:
 
 Once you have a configuration, Integrant needs to be told how to
 implement it. The `init-key` multimethod tells Integrant how to
-initiate a key:
+initialize a key:
 
 ```clojure
 (require '[ring.jetty.adapter :as jetty]
