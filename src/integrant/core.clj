@@ -95,7 +95,7 @@
        (with-meta {::origin config}))))
 
 (defn halt!
-  "Halt an system map by applying halt-key! in dependency order."
+  "Halt an system map by applying halt-key! in reverse dependency order."
   ([system]
    (halt! system (keys system)))
   ([system keys]
