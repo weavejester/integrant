@@ -22,7 +22,9 @@
 
 (deftest read-string-test
   (is (= (ig/read-string "{:foo/a #ref :foo/b, :foo/b 1}")
-         {:foo/a (ig/ref :foo/b), :foo/b 1})))
+         {:foo/a (ig/ref :foo/b), :foo/b 1}))
+  (is (= (ig/read-string {:readers {'var find-var}} "{:foo/a #var clojure.core/+}")
+         {:foo/a #'+})))
 
 (deftest init-test
   (reset! log [])

@@ -36,8 +36,11 @@
 (defn read-string
   "Read a config from a string of edn. Refs may be denotied by tagging keywords
   with #ref."
-  [s]
-  (edn/read-string {:readers {'ref ref}} s))
+  ([s]
+   (read-string {:eof nil} s))
+  ([opts s]
+   (let [readers (merge {'ref ref} (:readers opts {}))]
+     (edn/read-string (assoc opts :readers readers) s))))
 
 (defn expand-1
   "Replace all refs for the supplied key with the referenced value."
