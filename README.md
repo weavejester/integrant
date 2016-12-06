@@ -24,7 +24,7 @@ functions are used to build records, which are then assembled into
 systems.
 
 In Integrant, systems are created from a configuration data structure,
-typically loaded from an edn resource. The architecture of the
+typically loaded from an [edn][] resource. The architecture of the
 application is defined through data, rather than code.
 
 In Component, only records or maps may be components. Anything else
@@ -34,6 +34,8 @@ function, needs to be wrapped in a record.
 In Integrant, anything can be dependent on anything else. The
 dependencies are resolved from the configuration before it's
 initialized into a system.
+
+[edn]: https://github.com/edn-format/edn
 
 ## Installation
 
