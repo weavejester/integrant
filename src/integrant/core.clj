@@ -79,9 +79,9 @@
   (-> m (update k (partial init-key k)) (expand-1 k)))
 
 (defn init
-  "Turn a config map into an system map. Keys are traversed in
-  dependency order, initiated via the init-key multimethod, then the
-  refs associated with the key are expanded."
+  "Turn a config map into an system map. Keys are traversed in dependency
+  order, initiated via the init-key multimethod, then the refs associated with
+  the key are expanded."
   ([config]
    (init config (keys config)))
   ([config keys]
