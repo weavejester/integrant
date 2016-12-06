@@ -20,6 +20,10 @@
   (is (= (ig/expand {::a (ig/ref ::b), ::b (ig/ref ::c), ::c 2})
          {::a 2, ::b 2, ::c 2})))
 
+(deftest read-string-test
+  (is (= (ig/read-string "{:foo/a #ref :foo/b, :foo/b 1}")
+         {:foo/a (ig/ref :foo/b), :foo/b 1})))
+
 (deftest init-test
   (reset! log [])
   (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
