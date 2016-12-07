@@ -75,8 +75,13 @@
 (defn- sort-keys [ks m]
   (sort (dep/topo-comparator (dependency-graph m)) ks))
 
+(defn- lookup-refs
+  "Replace all refs in subconfig with referenced value from config."
+  ([config subconfig]
+   (walk/postwalk #(if (ref? %) (config (:key %) %) %) subconfig)))
+
 (defn- update-key [m k]
-  (-> m (update k (partial init-key k)) (expand-1 k)))
+  (-> m (update k (comp (partial init-key k) (partial lookup-refs m)))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
