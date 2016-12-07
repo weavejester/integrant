@@ -1,5 +1,7 @@
 # Integrant
 
+[![Build Status](https://travis-ci.org/weavejester/integrant.svg?branch=master)](https://travis-ci.org/weavejester/integrant)
+
 > integrant /ˈɪntɪɡr(ə)nt/
 >
 > (of parts) making up or contributing to a whole; constituent.
