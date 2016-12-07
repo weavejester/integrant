@@ -27,9 +27,9 @@ In Integrant, systems are created from a configuration data structure,
 typically loaded from an [edn][] resource. The architecture of the
 application is defined through data, rather than code.
 
-In Component, only records or maps may be components. Anything else
-you might want to have included in the dependency graph, like a
-function, needs to be wrapped in a record.
+In Component, only records or maps may have dependencies. Anything else
+you might want to inject with dependencies, like a function, needs to be
+ wrapped in a record.
 
 In Integrant, anything can be dependent on anything else. The
 dependencies are resolved from the configuration before it's
