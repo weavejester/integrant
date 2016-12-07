@@ -77,8 +77,8 @@ And load it with `read-string`:
 ```
 
 Once you have a configuration, Integrant needs to be told how to
-implement it. The `init-key` multimethod tells Integrant how to
-initialize a key:
+implement it. The `init-key` multimethod takes two arguments, a key
+and its corresponding value, and tells Integrant how to initialize it:
 
 ```clojure
 (require '[ring.jetty.adapter :as jetty]
@@ -91,8 +91,17 @@ initialize a key:
   (fn [_] (resp/response (str "Hello " name))))
 ```
 
-While the `halt-key!` multimethod tells Integrant how to stop and
-clean up after a key:
+Keys are initialized recursively, with the values in the map being
+replaced by the return value from `init-key`.
+
+In the configuration we defined before, `:handler/greet` will be
+initialized first, and it's value replaced with a handler function.
+When `:adapter/jetty` references `:handler/greet`, it will receive the
+initialized handler function, rather than the raw configuration.
+
+The `halt-key!` multimethod tells Integrant how to stop and clean up
+after a key. Like `init-key`, it takes two arguments, a key and its
+corresponding initialized value.
 
 ```clojure
 (defmethod ig/halt-key! :adapter/jetty [_ server]
