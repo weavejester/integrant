@@ -42,19 +42,18 @@
    (let [readers (merge {'ref ref} (:readers opts {}))]
      (edn/read-string (assoc opts :readers readers) s))))
 
-(defn expand-1
-  "Replace all refs for the supplied key with the referenced value."
-  [config key]
-  (let [value (config key)]
-    (walk/postwalk #(if (and (ref? %) (= key (:key %))) value %) config)))
+(defn- expand-key [config value]
+  (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
+
+(defn- sort-keys [ks m]
+  (sort (dep/topo-comparator (dependency-graph m)) ks))
 
 (defn expand
-  "Replace all refs with the values they correspond to. An optional collection
-  of keys may be supplied to limit which refs are affected."
-  ([config]
-   (expand config (keys config)))
-  ([config keys]
-   (reduce expand-1 config keys)))
+  "Replace all refs with the values they correspond to."
+  [config]
+  (reduce (fn [m k] (update m k (partial expand-key m)))
+          config
+          (sort-keys (keys config) config)))
 
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
@@ -72,11 +71,8 @@
 
 (defmethod halt-key! :default [_ v])
 
-(defn- sort-keys [ks m]
-  (sort (dep/topo-comparator (dependency-graph m)) ks))
-
 (defn- update-key [m k]
-  (-> m (update k (partial init-key k)) (expand-1 k)))
+  (update m k (comp (partial init-key k) (partial expand-key m))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
