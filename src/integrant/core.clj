@@ -48,12 +48,29 @@
 (defn- sort-keys [ks m]
   (sort (dep/topo-comparator (dependency-graph m)) ks))
 
+(defn- update-key [m k f]
+  (update m k (comp (partial f k) (partial expand-key m))))
+
+(defn build
+  "Apply a function f to each key value pair in a configuration map. Keys are
+  traversed in dependency order, and any references in the value expanded. The
+  function should take two arguments, a key and value, and return a new value."
+  [config keys f]
+  {:pre [(map? config)]}
+  (when-let [refs (seq (missing-refs config))]
+    (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
+                    {:reason ::missing-refs
+                     :config config
+                     :missing-refs refs})))
+  (-> (reduce (fn [m k] (update-key m k f))
+              config
+              (sort-keys keys config))
+      (with-meta {::origin config})))
+
 (defn expand
   "Replace all refs with the values they correspond to."
   [config]
-  (reduce (fn [m k] (update m k (partial expand-key m)))
-          config
-          (sort-keys (keys config) config)))
+  (build config (keys config) (fn [_ v] v)))
 
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
@@ -71,9 +88,6 @@
 
 (defmethod halt-key! :default [_ v])
 
-(defn- update-key [m k]
-  (update m k (comp (partial init-key k) (partial expand-key m))))
-
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
   order, initiated via the init-key multimethod, then the refs associated with
@@ -82,13 +96,7 @@
    (init config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (when-let [refs (seq (missing-refs config))]
-     (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
-                     {:reason ::missing-refs
-                      :config config
-                      :missing-refs refs})))
-   (-> (reduce update-key config (sort-keys keys config))
-       (with-meta {::origin config}))))
+   (build config keys init-key)))
 
 (defn halt!
   "Halt an system map by applying halt-key! in reverse dependency order."

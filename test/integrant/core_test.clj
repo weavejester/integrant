@@ -46,3 +46,21 @@
   (is (thrown-with-msg? clojure.lang.ExceptionInfo
                         #"Missing definitions for refs: :integrant.core-test/b"
                         (ig/init {::a (ig/ref ::b)}))))
+
+(defn build-log [config]
+  (let [log (atom [])]
+    [(ig/build
+       config
+       (keys config)
+       (fn [k v]
+         (last (swap! log conj [:build k v]))))
+     @log]))
+
+(deftest build-test
+  (is (= [{:a [:build :a [:build :b 1]]
+           :b [:build :b 1]}
+          [[:build :b 1]
+           [:build :a [:build :b 1]]]]
+         (build-log
+          {:a (ig/ref :b)
+           :b 1}))))
