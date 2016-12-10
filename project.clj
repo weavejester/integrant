@@ -8,29 +8,28 @@
   :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.7.228"]]}}
   :plugins [[lein-doo "0.1.7"]]
   :cljsbuild
-  {:builds [{:id "phantom-test"
+  {:builds [{:id "test-phantom"
              :source-paths ["src" "test"]
-             :compiler {:output-to  "target/cljs/phantom-test/integrant-test.js"
-                        :output-dir "target/cljs/phantom-test/out"
+             :compiler {:output-to  "target/cljs/test-phantom/test-integrant.js"
+                        :output-dir "target/cljs/test-phantom/out"
                         :main integrant.test-runner
                         :optimizations :none}}
-            {:id "nashorn-test"
+            {:id "test-nashorn"
              :source-paths ["src" "test"]
-             :compiler {:output-to  "target/cljs/nashorn-test/integrant-test.js"
-                        :output-dir "target/cljs/nashorn-test/out"
+             :compiler {:output-to  "target/cljs/test-nashorn/test-integrant.js"
+                        :output-dir "target/cljs/test-nashorn/out"
                         :main integrant.test-runner
-                        ;; nashorn apparently doesn't support :none or :whitespace (??!)
                         :optimizations :simple}}
-            {:id "node-test"
+            {:id "test-node"
              :source-paths ["src" "test"]
              :compiler {:target :nodejs
-                        :output-to  "target/cljs/node-test/integrant-test.js"
-                        :output-dir "target/cljs/node-test/out"
+                        :output-to  "target/cljs/test-node/test-integrant.js"
+                        :output-dir "target/cljs/test-node/out"
                         :main integrant.test-runner
                         :optimizations :none}}]}
-  :aliases {"phantom-test" ["doo" "phantom" "phantom-test" "once"]
-            "nashorn-test" ["doo" "nashorn" "nashorn-test" "once"]
-            "node-test"    ["doo" "node" "node-test" "once"]
-            "cljs-test"    ["do" ["phantom-test"] ["nashorn-test"] ["node-test"]]
-            "all-tests"    ["do" ["test"] ["cljs-test"]]})
+  :aliases {"test-phantom" ["doo" "phantom" "test-phantom" "once"]
+            "test-nashorn" ["doo" "nashorn" "test-nashorn" "once"]
+            "test-node"    ["doo" "node" "test-node" "once"]
+            "test-cljs"    ["do" ["test-phantom"] ["test-nashorn"] ["test-node"]]
+            "test-all"     ["do" ["test"] ["test-cljs"]]})
 
