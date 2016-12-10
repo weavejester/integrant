@@ -1,7 +1,7 @@
 (ns integrant.core-test
-  (:require [clojure.test :refer :all]
-            [integrant.core :as ig]))
-
+  (:require [integrant.core :as ig]
+   #?(:clj  [clojure.test :refer :all]
+      :cljs [cljs.test :refer-macros [deftest is]])))
 (def log (atom []))
 
 (defmethod ig/init-key :default [k v]
@@ -20,11 +20,12 @@
   (is (= (ig/expand {::a (ig/ref ::b), ::b (ig/ref ::c), ::c 2})
          {::a 2, ::b 2, ::c 2})))
 
-(deftest read-string-test
-  (is (= (ig/read-string "{:foo/a #ref :foo/b, :foo/b 1}")
-         {:foo/a (ig/ref :foo/b), :foo/b 1}))
-  (is (= (ig/read-string {:readers {'var find-var}} "{:foo/a #var clojure.core/+}")
-         {:foo/a #'+})))
+#?(:clj
+   (deftest read-string-test
+     (is (= (ig/read-string "{:foo/a #ref :foo/b, :foo/b 1}")
+            {:foo/a (ig/ref :foo/b), :foo/b 1}))
+     (is (= (ig/read-string {:readers {'var find-var}} "{:foo/a #var clojure.core/+}")
+            {:foo/a #'+}))))
 
 (deftest init-test
   (reset! log [])
@@ -43,6 +44,7 @@
                  [:halt ::b [1]]]))))
 
 (deftest missing-ref-test
-  (is (thrown-with-msg? clojure.lang.ExceptionInfo
+  (is (thrown-with-msg? #?(:clj  clojure.lang.ExceptionInfo
+                           :cljs cljs.core.ExceptionInfo)
                         #"Missing definitions for refs: :integrant.core-test/b"
                         (ig/init {::a (ig/ref ::b)}))))

@@ -1,7 +1,7 @@
 (ns integrant.core
   (:refer-clojure :exclude [ref read-string])
   (:require [com.stuartsierra.dependency :as dep]
-            [clojure.edn :as edn]
+    #?(:clj [clojure.edn :as edn])
             [clojure.walk :as walk]
             [clojure.string :as str]))
 
@@ -33,15 +33,16 @@
              (dep/graph)
              config))
 
-(defn read-string
-  "Read a config from a string of edn. Refs may be denotied by tagging keywords
-  with #ref."
-  ([s]
-   (read-string {:eof nil} s))
-  ([opts s]
-   (let [readers (merge {'ref ref} (:readers opts {}))]
-     (edn/read-string (assoc opts :readers readers) s))))
-
+#?(:clj
+   (defn read-string
+    "Read a config from a string of edn. Refs may be denotied by tagging keywords
+     with #ref."
+     ([s]
+      (read-string {:eof nil} s))
+     ([opts s]
+      (let [readers (merge {'ref ref} (:readers opts {}))]
+        (edn/read-string (assoc opts :readers readers) s)))))
+ 
 (defn- expand-key [config value]
   (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
 
