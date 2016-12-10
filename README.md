@@ -6,10 +6,10 @@
 >
 > (of parts) making up or contributing to a whole; constituent.
 
-Integrant is a Clojure micro-framework for building applications with
-data-driven architecture. It can be thought of as an alternative
-to [Component][] or [Mount][], and was inspired by [Arachne][] and
-through work on [Duct][].
+Integrant is a Clojure (and ClojureScript) micro-framework for
+building applications with data-driven architecture. It can be thought
+of as an alternative to [Component][] or [Mount][], and was inspired
+by [Arachne][] and through work on [Duct][].
 
 [component]: https://github.com/stuartsierra/component
 [mount]: https://github.com/tolitius/mount
@@ -43,7 +43,7 @@ initialized into a system.
 
 To install, add the following to your project `:dependencies`:
 
-    [integrant "0.1.1"]
+    [integrant "0.1.2"]
 
 ## Usage
 
