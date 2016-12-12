@@ -1,5 +1,5 @@
 (ns integrant.core
-  (:refer-clojure :exclude [ref read-string])
+  (:refer-clojure :exclude [ref read-string run!])
   (:require [com.stuartsierra.dependency :as dep]
     #?(:clj [clojure.edn :as edn])
             [clojure.walk :as walk]
@@ -42,12 +42,30 @@
      ([opts s]
       (let [readers (merge {'ref ref} (:readers opts {}))]
         (edn/read-string (assoc opts :readers readers) s)))))
- 
+
 (defn- expand-key [config value]
   (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
 
 (defn- sort-keys [ks m]
   (sort (dep/topo-comparator (dependency-graph m)) ks))
+
+(defn run!
+  "Apply a function f to each key value pair in a system map. Keys are traversed
+  in dependency order. The function should take two arguments, a key and value,
+  and return a new value."
+  [system keys f]
+  {:pre [(map? system) (some-> system meta ::origin)]}
+  (doseq [k (sort-keys keys (-> system meta ::origin))]
+    (f k (system k))))
+
+(defn reverse-run!
+  "Apply a function f to each key value pair in a system map. Keys are traversed
+  in reverse dependency order. The function should take two arguments, a key and
+  value, and return a new value."
+  [system keys f]
+  {:pre [(map? system) (some-> system meta ::origin)]}
+  (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
+    (f k (system k))))
 
 (defn- update-key [m k f]
   (update m k (comp (partial f k) (partial expand-key m))))
@@ -100,10 +118,9 @@
    (build config keys init-key)))
 
 (defn halt!
-  "Halt an system map by applying halt-key! in reverse dependency order."
+  "Halt a system map by applying halt-key! in reverse dependency order."
   ([system]
    (halt! system (keys system)))
   ([system keys]
-   {:pre [(map? system) (-> system meta ::origin)]}
-   (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
-     (halt-key! k (system k)))))
+   {:pre [(map? system) (some-> system meta ::origin)]}
+   (reverse-run! system keys halt-key!)))
