@@ -12,6 +12,13 @@
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
 
+(defmethod ig/resume-key :default [k v v']
+  (swap! log conj [:resume k v v'])
+  [v])
+
+(defmethod ig/suspend-key! :default [k v]
+  (swap! log conj [:suspend k v]))
+
 (deftest ref-test
   (is (ig/ref? (ig/ref :foo))))
 
@@ -43,6 +50,19 @@
                  [:init ::a [1]]
                  [:halt ::a [[1]]]
                  [:halt ::b [1]]]))))
+
+(deftest suspend-resume-test
+  (reset! log [])
+  (let [c  {::a (ig/ref ::b), ::b 1}
+        m  (ig/init c)
+        _  (ig/suspend! m)
+        m' (ig/resume c m)]
+    (is (= @log [[:init ::b 1]
+                 [:init ::a [1]]
+                 [:suspend ::a [[1]]]
+                 [:suspend ::b [1]]
+                 [:resume ::b 1 [1]]
+                 [:resume ::a [1] [[1]]]]))))
 
 (deftest missing-ref-test
   (is (thrown-with-msg? #?(:clj  clojure.lang.ExceptionInfo

@@ -94,7 +94,7 @@
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
-  (fn [k v] k))
+  (fn [key value] key))
 
 (defmethod init-key :default [_ v] v)
 
@@ -103,9 +103,29 @@
   stopping processes or cleaning up resources. For example, a database
   connection might be closed. The return value of this multimethod is
   discarded."
-  (fn [k v] k))
+  (fn [key value] key))
 
 (defmethod halt-key! :default [_ v])
+
+(defmulti resume-key
+  "Turn a config value associated with a key into a concrete implementation,
+  but reuse resources (e.g. connections, running threads, etc) from an existing
+  implementation. By default this multimethod calls init-key and ignores the
+  additional argument."
+  (fn [key config-value system-value] key))
+
+(defmethod resume-key :default [k v _]
+  (init-key k v))
+
+(defmulti suspend-key!
+  "Suspend a running implementation associated with a key, so that it may be
+  eventually passed to resume-key. By default this multimethod calls halt-key!,
+  but it may be customized to do things like keep a server running, but buffer
+  incoming requests until the server is resumed."
+  (fn [key value] key))
+
+(defmethod suspend-key! :default [k v _]
+  (halt-key! k v))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
@@ -124,3 +144,22 @@
   ([system keys]
    {:pre [(map? system) (some-> system meta ::origin)]}
    (reverse-run! system keys halt-key!)))
+
+(defn resume
+  "Turn a config map into a system map, reusing resources from an existing
+  system when it's possible to do so. Keys are traversed in dependency order,
+  resumed with the resume-key multimethod, then the refs associated with the
+  key are expanded."
+  ([config old-system]
+   (resume config old-system (keys config)))
+  ([config old-system keys]
+   {:pre [(map? config) (map? old-system) (some-> old-system meta ::origin)]}
+   (build config keys (fn [k v] (resume-key k v (old-system k))))))
+
+(defn suspend!
+  "Suspend a system map by applying suspend-key! in reverse dependency order."
+  ([system]
+   (suspend! system (keys system)))
+  ([system keys]
+   {:pre [(map? system) (some-> system meta ::origin)]}
+   (reverse-run! system keys suspend-key!)))
