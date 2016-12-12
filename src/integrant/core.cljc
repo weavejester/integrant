@@ -50,18 +50,18 @@
   (sort (dep/topo-comparator (dependency-graph m)) ks))
 
 (defn run!
-  "Apply a function f to each key value pair in a system map. Keys are traversed
-  in dependency order. The function should take two arguments, a key and value,
-  and return a new value."
+  "Apply a side-effectful function f to each key value pair in a system map.
+  Keys are traversed in dependency order. The function should take two
+  arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
   (doseq [k (sort-keys keys (-> system meta ::origin))]
     (f k (system k))))
 
 (defn reverse-run!
-  "Apply a function f to each key value pair in a system map. Keys are traversed
-  in reverse dependency order. The function should take two arguments, a key and
-  value, and return a new value."
+  "Apply a side-effectful function f to each key value pair in a system map.
+  Keys are traversed in reverse dependency order. The function should take two
+  arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
   (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
