@@ -47,6 +47,8 @@ To install, add the following to your project `:dependencies`:
 
 ## Usage
 
+### Configurations
+
 Integrant starts with a configuration map. Each top-level key in the
 map represents a configuration that can be "initialized" into a
 concrete implementation. Configurations can reference other keys via
@@ -75,6 +77,8 @@ And load it with `read-string`:
 (def config
   (ig/read-string (slurp "config.edn")))
 ```
+
+### Initializing and halting
 
 Once you have a configuration, Integrant needs to be told how to
 implement it. The `init-key` multimethod takes two arguments, a key
@@ -129,6 +133,79 @@ When a system needs to be shut down, `halt!` is used:
 Like Component, `halt!` shuts down the system in reverse dependency
 order. Unlike Component, `halt!` is entirely side-effectful. The
 return value should be ignored, and the system structure discarded.
+
+### Suspending and resuming
+
+During development, we often want to rebuild a system, but not to
+close open connections or terminate running threads. For this purpose
+Integrant has the `suspend!` and `resume` functions.
+
+The `suspend!` function acts like `halt!`:
+
+```clojure
+(ig/suspend! system)
+```
+
+By default this functions the same as `halt!`, but we can customize
+the behavior with the `suspend-key!` multimethod to keep open
+connections and resources that `halt-key!` would close.
+
+The `resume` function acts like `init`, but takes an additional
+argument specifying a suspended system:
+
+```clojure
+(def new-system
+  (ig/resume config system))
+```
+
+By default the system argument is ignored and `resume` functions the
+same as `init`, but as with `suspend!` we can customize the behavior
+with the `resume-key` multimethod. If we implement this method, we can
+reuse open resources from the suspended system.
+
+To illustrate this, let's reimplement the Jetty adapter with the
+capability to suspend and resume:
+
+```clojure
+(defmethod ig/init-key :adapter/jetty [_ opts]
+  (let [handler (atom (delay (:handler opts)))
+        options (-> opts (dissoc :handler) (assoc :join? false))]
+    {:handler handler
+     :server  (jetty/run-jetty (fn [req] (@@handler req)) options)}))
+
+(defmethod ig/halt-key! :adapter/jetty [_ {:keys [server]}]
+  (.stop server))
+
+(defmethod ig/suspend-key! :adapter/jetty [_ {:keys [handler]}]
+  (reset! handler (promise)))
+
+(defmethod ig/resume-key :adapter/jetty [key opts old-opts old-impl]
+  (if (= (dissoc opts :handler) (dissoc old-opts :handler))
+    (do (deliver @(:handler old-impl) (:handler opts))
+        old-impl)
+    (do (ig/halt-key! key old-impl)
+        (ig/init-key key opts))))
+```
+
+This example may require some explanation. Instead of passing the
+handler directly to the web server, we put it in an `atom`, so that we
+can change the handler without restarting the server.
+
+We further encase the handler in a `delay`. This allows us to replace
+it with a `promise` when we suspend the server. Because a promise will
+block until a value is delivered, once suspended the server will
+accept requests but wait around until its resumed.
+
+Once we decide to resume the server, we first check to see if the
+options have changed. If they have, we don't take any chances; better
+to halt and re-init from scratch. If the server options haven't
+changed, then deliver the new handler to the promise which unblocks
+the server.
+
+Note that we only need to go to this additional effort if retaining
+open resources is useful during development, otherwise we can rely on
+the default `init` and `halt!` behavior. In production, it's always
+better to terminate and restart.
 
 ## License
 
