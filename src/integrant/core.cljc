@@ -115,7 +115,7 @@
   additional argument."
   (fn [key value old-value old-impl] key))
 
-(defmethod resume-key :default [k v _]
+(defmethod resume-key :default [k v _ _]
   (init-key k v))
 
 (defmulti suspend-key!
@@ -125,7 +125,7 @@
   incoming requests until the server is resumed."
   (fn [key value] key))
 
-(defmethod suspend-key! :default [k v _]
+(defmethod suspend-key! :default [k v]
   (halt-key! k v))
 
 (defn init
