@@ -12,9 +12,9 @@
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
 
-(defmethod ig/resume-key :default [k v v']
-  (swap! log conj [:resume k v v'])
-  [v])
+(defmethod ig/resume-key :default [k cfg cfg' sys]
+  (swap! log conj [:resume k cfg cfg' sys])
+  [cfg])
 
 (defmethod ig/suspend-key! :default [k v]
   (swap! log conj [:suspend k v]))
@@ -61,8 +61,8 @@
                  [:init ::a [1]]
                  [:suspend ::a [[1]]]
                  [:suspend ::b [1]]
-                 [:resume ::b 1 [1]]
-                 [:resume ::a [1] [[1]]]]))))
+                 [:resume ::b 1 1 [1]]
+                 [:resume ::a [1] [1] [[1]]]]))))
 
 (deftest missing-ref-test
   (is (thrown-with-msg? #?(:clj  clojure.lang.ExceptionInfo

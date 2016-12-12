@@ -67,8 +67,11 @@
   (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
     (f k (system k))))
 
-(defn- update-key [m k f]
-  (update m k (comp (partial f k) (partial expand-key m))))
+(defn- build-key [f m k]
+  (let [v (expand-key m (m k))]
+    (-> m
+        (assoc k (f k v))
+        (vary-meta assoc-in [::build k] v))))
 
 (defn build
   "Apply a function f to each key value pair in a configuration map. Keys are
@@ -81,10 +84,8 @@
                     {:reason ::missing-refs
                      :config config
                      :missing-refs refs})))
-  (-> (reduce (fn [m k] (update-key m k f))
-              config
-              (sort-keys keys config))
-      (with-meta {::origin config})))
+  (-> (reduce (partial build-key f) config (sort-keys keys config))
+      (vary-meta assoc ::origin config)))
 
 (defn expand
   "Replace all refs with the values they correspond to."
@@ -112,7 +113,7 @@
   but reuse resources (e.g. connections, running threads, etc) from an existing
   implementation. By default this multimethod calls init-key and ignores the
   additional argument."
-  (fn [key config-value system-value] key))
+  (fn [key value old-value old-impl] key))
 
 (defmethod resume-key :default [k v _]
   (init-key k v))
@@ -150,11 +151,14 @@
   system when it's possible to do so. Keys are traversed in dependency order,
   resumed with the resume-key multimethod, then the refs associated with the
   key are expanded."
-  ([config old-system]
-   (resume config old-system (keys config)))
-  ([config old-system keys]
-   {:pre [(map? config) (map? old-system) (some-> old-system meta ::origin)]}
-   (build config keys (fn [k v] (resume-key k v (old-system k))))))
+  ([config system]
+   (resume config system (keys config)))
+  ([config system keys]
+   {:pre [(map? config) (map? system) (some-> system meta ::origin)]}
+   (build config keys (fn [k v]
+                        (if (contains? system k)
+                          (resume-key k v (-> system meta ::build k) (system k))
+                          (init-key k v))))))
 
 (defn suspend!
   "Suspend a system map by applying suspend-key! in reverse dependency order."
