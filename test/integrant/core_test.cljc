@@ -2,6 +2,7 @@
   (:require [integrant.core :as ig]
    #?(:clj  [clojure.test :refer :all]
       :cljs [cljs.test :refer-macros [deftest is]])))
+
 (def log (atom []))
 
 (defmethod ig/init-key :default [k v]
