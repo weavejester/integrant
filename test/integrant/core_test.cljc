@@ -51,11 +51,7 @@
 
 (defn build-log [config]
   (let [log (atom [])]
-    [(ig/build
-       config
-       (keys config)
-       (fn [k v]
-         (last (swap! log conj [:build k v]))))
+    [(ig/build config (keys config) (fn [k v] (last (swap! log conj [:build k v]))))
      @log]))
 
 (deftest build-test
@@ -63,30 +59,22 @@
            :b [:build :b 1]}
           [[:build :b 1]
            [:build :a [:build :b 1]]]]
-         (build-log
-          {:a (ig/ref :b)
-           :b 1}))))
+         (build-log {:a (ig/ref :b)
+                     :b 1}))))
 
 (defn test-log [f m]
   (let [log (atom [])]
-    [(f m
-        (keys m)
-        (fn [k v]
-          (last (swap! log conj [:test k v]))))
+    [(f m (keys m) (fn [k v] (last (swap! log conj [:test k v]))))
      @log]))
 
 (deftest run-test
   (let [config {:a (ig/ref :b), :b 1}
         [system _] (build-log config)]
-    (is
-     (= [nil
-         [[:test :b [:build :b 1]]
-          [:test :a [:build :a [:build :b 1]]]]]
-        (test-log ig/run! system)))
-    (is
-     (= [nil
-         [[:test :a [:build :a [:build :b 1]]]
-          [:test :b [:build :b 1]]]]
-        (test-log ig/reverse-run! system)))
-    [(test-log ig/run! system)
-     (test-log ig/reverse-run! system)]))
+    (is (= [nil
+            [[:test :b [:build :b 1]]
+             [:test :a [:build :a [:build :b 1]]]]]
+           (test-log ig/run! system)))
+    (is (= [nil
+            [[:test :a [:build :a [:build :b 1]]]
+             [:test :b [:build :b 1]]]]
+           (test-log ig/reverse-run! system)))))
