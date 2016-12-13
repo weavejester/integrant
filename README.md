@@ -207,6 +207,27 @@ open resources is useful during development, otherwise we can rely on
 the default `init` and `halt!` behavior. In production, it's always
 better to terminate and restart.
 
+### Loading namespaces
+
+It can be hard to remember to load all the namespaces that contain the
+relevant multimethods. If you name your keys carefully, Integrant can
+help via the `load-namespaces` function.
+
+If a key has a namespace, `load-namespaces` will attempt to load
+it. It will also try concatenating the name of the key onto the end of
+its namespace, and loading that as well.
+
+For example:
+
+```clojure
+(load-namespaces {:foo.component/bar {:message "hello"}})
+```
+
+This will attempt to load the namespace `foo.component` and also
+`foo.component.bar`. A list of all successfully loaded namespaces will
+be returned from the function. Missing namespaces are ignored.
+
+
 ## License
 
 Copyright © 2016 James Reeves
