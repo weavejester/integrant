@@ -95,6 +95,7 @@
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
+  {:arglists '([key value])}
   (fn [key value] key))
 
 (defmethod init-key :default [_ v] v)
@@ -104,6 +105,7 @@
   stopping processes or cleaning up resources. For example, a database
   connection might be closed. The return value of this multimethod is
   discarded."
+  {:arglists '([key value])}
   (fn [key value] key))
 
 (defmethod halt-key! :default [_ v])
@@ -113,6 +115,7 @@
   but reuse resources (e.g. connections, running threads, etc) from an existing
   implementation. By default this multimethod calls init-key and ignores the
   additional argument."
+  {:arglists '([key value old-value old-impl])}
   (fn [key value old-value old-impl] key))
 
 (defmethod resume-key :default [k v _ _]
@@ -123,6 +126,7 @@
   eventually passed to resume-key. By default this multimethod calls halt-key!,
   but it may be customized to do things like keep a server running, but buffer
   incoming requests until the server is resumed."
+  {:arglists '([key value])}
   (fn [key value] key))
 
 (defmethod suspend-key! :default [k v]
