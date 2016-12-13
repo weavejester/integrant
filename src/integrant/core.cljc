@@ -43,6 +43,29 @@
       (let [readers (merge {'ref ref} (:readers opts {}))]
         (edn/read-string (assoc opts :readers readers) s)))))
 
+#?(:clj
+   (defn- keyword->namespaces [kw]
+     (if-let [ns (namespace kw)]
+       [(symbol ns)
+        (symbol (str ns "." (name kw)))])))
+#?(:clj
+   (defn- try-require [sym]
+     (try (do (require sym) sym)
+          (catch java.io.FileNotFoundException _))))
+
+#?(:clj
+   (defn load-namespaces
+     "Attempt to load the namespaces referenced by the keys in a configuration.
+     If a key is namespaced, both the namespace and the namespace concatenated
+     with the name will be tried. For example, if a key is :foo.bar/baz, then the
+     function will attempt to load the namespaces foo.bar and foo.bar.baz. Upon
+     completion, a list of all loaded namespaces will be returned."
+     [config]
+     (doall (->> (keys config)
+                 (mapcat keyword->namespaces)
+                 (distinct)
+                 (keep try-require)))))
+
 (defn- expand-key [config value]
   (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
 

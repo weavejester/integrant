@@ -35,6 +35,22 @@
      (is (= (ig/read-string {:readers {'var find-var}} "{:foo/a #var clojure.core/+}")
             {:foo/a #'+}))))
 
+#?(:clj
+   (defn- remove-lib [lib]
+     (remove-ns lib)
+     (dosync (alter @#'clojure.core/*loaded-libs* disj lib))))
+
+#?(:clj
+   (deftest load-namespaces-test
+     (remove-lib 'integrant.test.foo)
+     (remove-lib 'integrant.test.bar)
+     (is (= (ig/load-namespaces {:integrant.test/foo 1, :integrant.test.bar/baz 2})
+            '(integrant.test.foo integrant.test.bar)))
+     (is (some? (find-ns 'integrant.test.foo)))
+     (is (some? (find-ns 'integrant.test.bar)))
+     (is (= (some-> 'integrant.test.foo/message find-var var-get) "foo"))
+     (is (= (some-> 'integrant.test.bar/message find-var var-get) "bar"))))
+
 (deftest init-test
   (reset! log [])
   (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
