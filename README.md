@@ -134,6 +134,10 @@ Like Component, `halt!` shuts down the system in reverse dependency
 order. Unlike Component, `halt!` is entirely side-effectful. The
 return value should be ignored, and the system structure discarded.
 
+Integrant marks functions that are entirely side-effectful with an
+ending `!`. You should ignore the return value of any function ending
+in a `!`.
+
 ### Suspending and resuming
 
 During development, we often want to rebuild a system, but not to
