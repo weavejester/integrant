@@ -43,7 +43,7 @@ initialized into a system.
 
 To install, add the following to your project `:dependencies`:
 
-    [integrant "0.1.4"]
+    [integrant "0.1.5"]
 
 ## Usage
 
