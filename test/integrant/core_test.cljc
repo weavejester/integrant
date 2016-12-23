@@ -1,7 +1,7 @@
 (ns integrant.core-test
   (:require [integrant.core :as ig]
    #?(:clj  [clojure.test :refer :all]
-      :cljs [cljs.test :refer-macros [deftest is]])))
+      :cljs [cljs.test :refer-macros [deftest is testing]])))
 
 (def log (atom []))
 
@@ -68,17 +68,31 @@
                  [:halt ::b [1]]]))))
 
 (deftest suspend-resume-test
-  (reset! log [])
-  (let [c  {::a (ig/ref ::b), ::b 1}
-        m  (ig/init c)
-        _  (ig/suspend! m)
-        m' (ig/resume c m)]
-    (is (= @log [[:init ::b 1]
-                 [:init ::a [1]]
-                 [:suspend ::a [[1]]]
-                 [:suspend ::b [1]]
-                 [:resume ::b 1 1 [1]]
-                 [:resume ::a [1] [1] [[1]]]]))))
+  (testing "same configuration"
+    (reset! log [])
+    (let [c  {::a (ig/ref ::b), ::b 1}
+          m  (ig/init c)
+          _  (ig/suspend! m)
+          m' (ig/resume c m)]
+      (is (= @log [[:init ::b 1]
+                   [:init ::a [1]]
+                   [:suspend ::a [[1]]]
+                   [:suspend ::b [1]]
+                   [:resume ::b 1 1 [1]]
+                   [:resume ::a [1] [1] [[1]]]]))))
+
+  (testing "missing keys"
+    (reset! log [])
+    (let [c  {::a (ig/ref ::b), ::b 1}
+          m  (ig/init c)
+          _  (ig/suspend! m)
+          m' (ig/resume (dissoc c ::a) m)]
+      (is (= @log [[:init ::b 1]
+                   [:init ::a [1]]
+                   [:suspend ::a [[1]]]
+                   [:suspend ::b [1]]
+                   [:halt ::a [[1]]]
+                   [:resume ::b 1 1 [1]]])))))
 
 (deftest missing-ref-test
   (is (thrown-with-msg? #?(:clj  clojure.lang.ExceptionInfo

@@ -124,10 +124,10 @@
 (defmethod init-key :default [_ v] v)
 
 (defmulti halt-key!
-  "Halt a running implementation associated with a key. This is often used for
-  stopping processes or cleaning up resources. For example, a database
-  connection might be closed. The return value of this multimethod is
-  discarded."
+  "Halt a running or suspended implementation associated with a key. This is
+  often used for stopping processes or cleaning up resources. For example, a
+  database connection might be closed. This multimethod must be idempotent.
+  The return value of this multimethod is discarded."
   {:arglists '([key value])}
   (fn [key value] key))
 
@@ -173,6 +173,9 @@
    {:pre [(map? system) (some-> system meta ::origin)]}
    (reverse-run! system keys halt-key!)))
 
+(defn- missing-keys [system ks]
+  (remove (set ks) (keys system)))
+
 (defn resume
   "Turn a config map into a system map, reusing resources from an existing
   system when it's possible to do so. Keys are traversed in dependency order,
@@ -182,6 +185,7 @@
    (resume config system (keys config)))
   ([config system keys]
    {:pre [(map? config) (map? system) (some-> system meta ::origin)]}
+   (halt! system (missing-keys system keys))
    (build config keys (fn [k v]
                         (if (contains? system k)
                           (resume-key k v (-> system meta ::build k) (system k))
