@@ -48,6 +48,7 @@
      (if-let [ns (namespace kw)]
        [(symbol ns)
         (symbol (str ns "." (name kw)))])))
+
 #?(:clj
    (defn- try-require [sym]
      (try (do (require sym) sym)
