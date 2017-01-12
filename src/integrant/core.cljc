@@ -3,6 +3,7 @@
   (:require [com.stuartsierra.dependency :as dep]
     #?(:clj [clojure.edn :as edn])
             [clojure.walk :as walk]
+            [clojure.set :as set]
             [clojure.string :as str]))
 
 (defrecord Ref [key])
@@ -70,8 +71,18 @@
 (defn- expand-key [config value]
   (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
 
-(defn- sort-keys [ks m]
-  (sort (dep/topo-comparator (dependency-graph m)) ks))
+(defn- find-keys [config keys f]
+  (let [graph  (dependency-graph config)
+        keyset (set keys)]
+    (->> (f graph keyset)
+         (set/union keyset)
+         (sort (dep/topo-comparator graph)))))
+
+(defn- dependent-keys [config keys]
+  (find-keys config keys dep/transitive-dependencies-set))
+
+(defn- reverse-dependent-keys [config keys]
+  (reverse (find-keys config keys dep/transitive-dependents-set)))
 
 (defn run!
   "Apply a side-effectful function f to each key value pair in a system map.
@@ -79,7 +90,7 @@
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (doseq [k (sort-keys keys (-> system meta ::origin))]
+  (doseq [k (dependent-keys (-> system meta ::origin) keys)]
     (f k (system k))))
 
 (defn reverse-run!
@@ -88,7 +99,7 @@
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (doseq [k (reverse (sort-keys keys (-> system meta ::origin)))]
+  (doseq [k (reverse-dependent-keys (-> system meta ::origin) keys)]
     (f k (system k))))
 
 (defn- build-key [f m k]
@@ -108,7 +119,7 @@
                     {:reason ::missing-refs
                      :config config
                      :missing-refs refs})))
-  (-> (reduce (partial build-key f) config (sort-keys keys config))
+  (-> (reduce (partial build-key f) config (dependent-keys config keys))
       (vary-meta assoc ::origin config)))
 
 (defn expand

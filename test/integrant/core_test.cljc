@@ -52,20 +52,43 @@
      (is (= (some-> 'integrant.test.bar/message find-var var-get) "bar"))))
 
 (deftest init-test
-  (reset! log [])
-  (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
-    (is (= m {::a [[1]], ::b [1]}))
-    (is (= @log [[:init ::b 1]
-                 [:init ::a [1]]]))))
+  (testing "without keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
+      (is (= m {::a [[1]], ::b [1]}))
+      (is (= @log [[:init ::b 1]
+                   [:init ::a [1]]]))))
+
+  (testing "with keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), ::b 1, ::c 2} [::a])]
+      (is (= m {::a [[1]], ::b [1], ::c 2}))
+      (is (= @log [[:init ::b 1]
+                   [:init ::a [1]]])))))
 
 (deftest halt-test
-  (reset! log [])
-  (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
-    (ig/halt! m)
-    (is (= @log [[:init ::b 1]
-                 [:init ::a [1]]
-                 [:halt ::a [[1]]]
-                 [:halt ::b [1]]]))))
+  (testing "without keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), ::b 1})]
+      (ig/halt! m)
+      (is (= @log [[:init ::b 1]
+                   [:init ::a [1]]
+                   [:halt ::a [[1]]]
+                   [:halt ::b [1]]]))))
+
+  (testing "with keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), ::b (ig/ref ::c), ::c 1})]
+      (ig/halt! m [::a])
+      (is (= @log [[:init ::c 1]
+                   [:init ::b [1]]
+                   [:init ::a [[1]]]
+                   [:halt ::a [[[1]]]]]))
+      (reset! log [])
+      (ig/halt! m [::c])
+      (is (= @log [[:halt ::a [[[1]]]]
+                   [:halt ::b [[1]]]
+                   [:halt ::c [1]]])))))
 
 (deftest suspend-resume-test
   (testing "same configuration"
