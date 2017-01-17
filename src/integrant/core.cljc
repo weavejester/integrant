@@ -24,9 +24,6 @@
     (ref? v)  (list (:key v))
     (coll? v) (mapcat find-refs v)))
 
-(defn- missing-refs [config]
-  (remove (-> config keys set) (find-refs config)))
-
 (defn dependency-graph
   "Return a dependency graph of all the refs in a config."
   [config]
@@ -68,12 +65,27 @@
                  (distinct)
                  (keep try-require)))))
 
+(defn find-derived
+  "Returns a seq of all key-value pairs in a map, m, where the key is derived
+  from the keyword, k. If there are no matching keys, nil is returned."
+  [m k]
+  (seq (filter #(isa? (key %) k) m)))
+
+(defn- ambiguous-refs [config]
+  (filter #(next (find-derived config %)) (find-refs config)))
+
+(defn- missing-refs [config]
+  (remove #(find-derived config %) (find-refs config)))
+
+(defn- resolve-ref [config ref]
+  (val (first (find-derived config (:key ref)))))
+
 (defn- expand-key [config value]
-  (walk/postwalk #(if (ref? %) (config (:key %)) %) value))
+  (walk/postwalk #(if (ref? %) (resolve-ref config %) %) value))
 
 (defn- find-keys [config keys f]
   (let [graph  (dependency-graph config)
-        keyset (set keys)]
+        keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
          (sort (dep/topo-comparator graph)))))
@@ -83,6 +95,21 @@
 
 (defn- reverse-dependent-keys [config keys]
   (reverse (find-keys config keys dep/transitive-dependents-set)))
+
+(defn- ambiguous-ref-exception [config ref]
+  (let [matching-keys (sort (map key (find-derived config ref)))]
+    (ex-info (str "Ambiguous ref: " ref ". Found multiple candidates: "
+                  (str/join ", " matching-keys))
+             {:reason ::ambiguous-ref
+              :config config
+              :ref    ref
+              :matching-keys matching-keys})))
+
+(defn- missing-refs-exception [config refs]
+  (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
+           {:reason ::missing-refs
+            :config config
+            :missing-refs refs}))
 
 (defn run!
   "Apply a side-effectful function f to each key value pair in a system map.
@@ -114,11 +141,10 @@
   function should take two arguments, a key and value, and return a new value."
   [config keys f]
   {:pre [(map? config)]}
+  (when-let [ref (first (ambiguous-refs config))]
+    (throw (ambiguous-ref-exception config ref)))
   (when-let [refs (seq (missing-refs config))]
-    (throw (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
-                    {:reason ::missing-refs
-                     :config config
-                     :missing-refs refs})))
+    (throw (missing-refs-exception config refs)))
   (-> (reduce (partial build-key f) config (dependent-keys config keys))
       (vary-meta assoc ::origin config)))
 

@@ -51,6 +51,16 @@
      (is (= (some-> 'integrant.test.foo/message find-var var-get) "foo"))
      (is (= (some-> 'integrant.test.bar/message find-var var-get) "bar"))))
 
+(derive ::p ::pp)
+(derive ::pp ::ppp)
+
+(deftest find-derived-test
+  (is (nil? (ig/find-derived {} ::p)))
+  (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::pp)
+         [[::p "y"] [::pp "z"]]))
+  (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::ppp)
+         [[::p "y"] [::pp "z"]])))
+
 (deftest init-test
   (testing "without keys"
     (reset! log [])
@@ -64,7 +74,14 @@
     (let [m (ig/init {::a (ig/ref ::b), ::b 1, ::c 2} [::a])]
       (is (= m {::a [[1]], ::b [1], ::c 2}))
       (is (= @log [[:init ::b 1]
-                   [:init ::a [1]]])))))
+                   [:init ::a [1]]]))))
+
+  (testing "with inherited keys"
+    (reset! log [])
+    (let [m (ig/init {::p (ig/ref ::a), ::a 1} [::pp])]
+      (is (= m {::p [[1]], ::a [1]}))
+      (is (= @log [[:init ::a 1]
+                   [:init ::p [1]]])))))
 
 (deftest halt-test
   (testing "without keys"
@@ -88,7 +105,16 @@
       (ig/halt! m [::c])
       (is (= @log [[:halt ::a [[[1]]]]
                    [:halt ::b [[1]]]
-                   [:halt ::c [1]]])))))
+                   [:halt ::c [1]]]))))
+
+  (testing "with inherited keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::p), ::p 1} [::a])]
+      (ig/halt! m [::pp])
+      (is (= @log [[:init ::p 1]
+                   [:init ::a [1]]
+                   [:halt ::a [[1]]]
+                   [:halt ::p [1]]])))))
 
 (deftest suspend-resume-test
   (testing "same configuration"
@@ -117,11 +143,19 @@
                    [:halt ::a [[1]]]
                    [:resume ::b 1 1 [1]]])))))
 
-(deftest missing-ref-test
-  (is (thrown-with-msg? #?(:clj  clojure.lang.ExceptionInfo
-                           :cljs cljs.core.ExceptionInfo)
-                        #"Missing definitions for refs: :integrant.core-test/b"
-                        (ig/init {::a (ig/ref ::b)}))))
+(deftest invalid-configs-test
+  (testing "ambiguous refs"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Ambiguous ref: " ::ppp "\\. "
+                          "Found multiple candidates: " ::p ", " ::pp))
+         (ig/init {::a (ig/ref ::ppp), ::p 1, ::pp 2}))))
+
+  (testing "missing refs"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Missing definitions for refs: " ::b))
+         (ig/init {::a (ig/ref ::b)})))))
 
 (defn build-log [config]
   (let [log (atom [])]
