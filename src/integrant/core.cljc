@@ -159,8 +159,6 @@
   {:arglists '([key value])}
   (fn [key value] key))
 
-(defmethod init-key :default [_ v] v)
-
 (defmulti halt-key!
   "Halt a running or suspended implementation associated with a key. This is
   often used for stopping processes or cleaning up resources. For example, a
