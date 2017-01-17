@@ -31,5 +31,6 @@
             "test-nashorn" ["doo" "nashorn" "test-nashorn" "once"]
             "test-node"    ["doo" "node" "test-node" "once"]
             "test-cljs"    ["do" ["test-phantom"] ["test-nashorn"] ["test-node"]]
-            "test-all"     ["do" ["test"] ["test-cljs"]]})
+            "test-all"     ["do" ["test"] ["test-cljs"]]
+            "test"         ["test" ":only" "integrant.core-test"]})
 
