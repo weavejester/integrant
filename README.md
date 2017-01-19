@@ -138,6 +138,15 @@ Integrant marks functions that are entirely side-effectful with an
 ending `!`. You should ignore the return value of any function ending
 in a `!`.
 
+Both `init` and `halt!` can take a second argument of a collection of
+keys. If this is supplied, the functions will only initiate or halt
+the supplied keys (and any referenced keys). For example:
+
+```clojure
+(def system
+  (ig/init config [:adapter/jetty]))
+```
+
 ### Suspending and resuming
 
 During development, we often want to rebuild a system, but not to
@@ -210,6 +219,10 @@ Note that we only need to go to this additional effort if retaining
 open resources is useful during development, otherwise we can rely on
 the default `init` and `halt!` behavior. In production, it's always
 better to terminate and restart.
+
+Like `init` and `halt!`, `resume` and `suspend!` can be supplied with
+a collection of keys to narrow down the parts of the configuration
+that are suspended or resumed.
 
 ### Loading namespaces
 
