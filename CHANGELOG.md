@@ -1,3 +1,10 @@
+## 0.2.0 (2017-01-19)
+
+* **BREAKING CHANGE:** Removed default behavior for `init-key` (#6)
+* Fixed functions that restrict by key to include referenced dependencies
+* Added support for using derived keys
+* Added `find-derived` function
+
 ## 0.1.5 (2016-12-23)
 
 * Ensured `resume` halts missing keys
