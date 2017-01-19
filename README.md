@@ -224,6 +224,29 @@ Like `init` and `halt!`, `resume` and `suspend!` can be supplied with
 a collection of keys to narrow down the parts of the configuration
 that are suspended or resumed.
 
+### Derived keywords
+
+Keywords have an inherited hierarchy. Integrant takes advantage of
+this by allowing keywords to refer to their descendents. For example:
+
+```clojure
+(derive :adapter/jetty :adapter/ring)
+```
+
+This sets up a hierarchical relationship, where the specific
+`:adapter/jetty` keyword is derived from the more generic
+`:adapter/ring`.
+
+We can now use `:adapter/ring` in place of `:adapter/jetty`:
+
+```clojure
+(ig/init config [:adapter/ring])
+```
+
+We can also use it as a reference, but only if the reference is
+unambiguous, and only refers to one key in the configuration.
+
+
 ### Loading namespaces
 
 It can be hard to remember to load all the namespaces that contain the
