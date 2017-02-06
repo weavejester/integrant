@@ -270,6 +270,6 @@ be returned from the function. Missing namespaces are ignored.
 
 ## License
 
-Copyright © 2016 James Reeves
+Copyright © 2017 James Reeves
 
 Released under the MIT license.
