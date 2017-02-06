@@ -55,6 +55,16 @@
 (derive ::pp ::ppp)
 
 (deftest find-derived-test
+  (is (nil? (ig/find-derived-1 {} ::p)))
+  (is (= (ig/find-derived-1 {::a "x" ::p "y"} ::pp)
+         [::p "y"]))
+  (is (thrown-with-msg?
+       #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+       (re-pattern (str "Ambiguous key: " ::pp "\\. "
+                        "Found multiple candidates: " ::p ", " ::pp))
+       (ig/find-derived-1 {::a "x" ::p "y", ::pp "z"} ::pp))))
+
+(deftest find-derived-1-test
   (is (nil? (ig/find-derived {} ::p)))
   (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::pp)
          [[::p "y"] [::pp "z"]]))
@@ -147,7 +157,7 @@
   (testing "ambiguous refs"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (re-pattern (str "Ambiguous ref: " ::ppp "\\. "
+         (re-pattern (str "Ambiguous key: " ::ppp "\\. "
                           "Found multiple candidates: " ::p ", " ::pp))
          (ig/init {::a (ig/ref ::ppp), ::p 1, ::pp 2}))))
 
