@@ -1,3 +1,7 @@
+## 0.2.1 (2017-02-06)
+
+* Added `find-derived-1` function
+
 ## 0.2.0 (2017-01-19)
 
 * **BREAKING CHANGE:** Removed default behavior for `init-key` (#6)
