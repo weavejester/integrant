@@ -1,7 +1,8 @@
 (ns integrant.core-test
   (:require [integrant.core :as ig]
    #?(:clj  [clojure.test :refer :all]
-      :cljs [cljs.test :refer-macros [deftest is testing]])))
+      :cljs [cljs.test :refer-macros [deftest is testing]])
+            [com.stuartsierra.dependency :as dep]))
 
 (def log (atom []))
 
@@ -53,6 +54,9 @@
 
 (derive ::p ::pp)
 (derive ::pp ::ppp)
+
+(deftest dependency-graph-test
+  (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
 
 (deftest find-derived-test
   (is (nil? (ig/find-derived-1 {} ::p)))
