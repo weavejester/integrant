@@ -1,3 +1,7 @@
+## 0.2.2 (2017-02-18)
+
+* Fixed `dependency-graph` to resolve derived refs (#10)
+
 ## 0.2.1 (2017-02-06)
 
 * Added `find-derived-1` function
