@@ -169,7 +169,15 @@
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "Missing definitions for refs: " ::b))
-         (ig/init {::a (ig/ref ::b)})))))
+         (ig/init {::a (ig/ref ::b)}))))
+
+  (testing "missing refs with explicit keys"
+    (is (= (ig/init {::a (ig/ref ::ppp), ::p 1, ::pp 2} [::p ::pp])
+           {::a (ig/ref ::ppp), ::p [1], ::pp [2]})))
+
+  (testing "missing refs with explicit keys"
+    (is (= (ig/init {::a 1, ::b (ig/ref ::c)} [::a])
+           {::a [1], ::b (ig/ref ::c)}))))
 
 (defn build-log [config]
   (let [log (atom [])]

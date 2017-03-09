@@ -49,7 +49,7 @@
     (first kvs)))
 
 (defn- find-derived-refs [config v]
-  (map #(key (find-derived-1 config %)) (find-refs v)))
+  (mapcat #(map key (find-derived config %)) (find-refs v)))
 
 (defn dependency-graph
   "Return a dependency graph of all the refs in a config. Resolve derived
@@ -154,12 +154,14 @@
   function should take two arguments, a key and value, and return a new value."
   [config keys f]
   {:pre [(map? config)]}
-  (when-let [ref (first (ambiguous-refs config))]
-    (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
-  (when-let [refs (seq (missing-refs config))]
-    (throw (missing-refs-exception config refs)))
-  (-> (reduce (partial build-key f) config (dependent-keys config keys))
-      (vary-meta assoc ::origin config)))
+  (let [relevant-keys   (dependent-keys config keys)
+        relevant-config (select-keys config relevant-keys)]
+    (when-let [ref (first (ambiguous-refs relevant-config))]
+      (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
+    (when-let [refs (seq (missing-refs relevant-config))]
+      (throw (missing-refs-exception config refs)))
+    (-> (reduce (partial build-key f) config relevant-keys)
+        (vary-meta assoc ::origin config))))
 
 (defn expand
   "Replace all refs with the values they correspond to."
