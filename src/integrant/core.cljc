@@ -160,7 +160,7 @@
       (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
     (when-let [refs (seq (missing-refs relevant-config))]
       (throw (missing-refs-exception config refs)))
-    (-> (reduce (partial build-key f) config relevant-keys)
+    (-> (reduce (partial build-key f) relevant-config relevant-keys)
         (vary-meta assoc ::origin config))))
 
 (defn expand

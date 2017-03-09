@@ -86,7 +86,7 @@
   (testing "with keys"
     (reset! log [])
     (let [m (ig/init {::a (ig/ref ::b), ::b 1, ::c 2} [::a])]
-      (is (= m {::a [[1]], ::b [1], ::c 2}))
+      (is (= m {::a [[1]], ::b [1]}))
       (is (= @log [[:init ::b 1]
                    [:init ::a [1]]]))))
 
@@ -173,11 +173,11 @@
 
   (testing "missing refs with explicit keys"
     (is (= (ig/init {::a (ig/ref ::ppp), ::p 1, ::pp 2} [::p ::pp])
-           {::a (ig/ref ::ppp), ::p [1], ::pp [2]})))
+           {::p [1], ::pp [2]})))
 
   (testing "missing refs with explicit keys"
     (is (= (ig/init {::a 1, ::b (ig/ref ::c)} [::a])
-           {::a [1], ::b (ig/ref ::c)}))))
+           {::a [1]}))))
 
 (defn build-log [config]
   (let [log (atom [])]
