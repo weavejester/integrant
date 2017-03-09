@@ -1,3 +1,8 @@
+## 0.2.3 (2017-03-09)
+
+* Changed `build` to ignore errors for irrelevant keys
+* Changed `build` to exclude irrelevant keys from the system
+
 ## 0.2.2 (2017-02-18)
 
 * Fixed `dependency-graph` to resolve derived refs (#10)
