@@ -24,6 +24,22 @@
     (ref? v)  (list (:key v))
     (coll? v) (mapcat find-refs v)))
 
+(defonce
+  ^{:doc "Return a unique keyword that is derived from an ordered collection of
+  keywords. The function will return the same keyword for the same collection."
+    :arglists '([kws])}
+  composite-keyword
+  (memoize
+   (fn [kws]
+     (let [parts     (for [kw kws] (str (namespace kw) "." (name kw)))
+           prefix    (str (str/join "+" parts) "_")
+           composite (keyword "integrant.composite" (str (gensym prefix)))]
+       (doseq [kw kws] (derive composite kw))
+       composite))))
+
+(defn- normalize-key [k]
+  (if (vector? k) (composite-keyword k) k))
+
 (defn- ambiguous-key-exception [config key matching-keys]
   (ex-info (str "Ambiguous key: " key ". Found multiple candidates: "
                 (str/join ", " (sort matching-keys)))
@@ -36,7 +52,7 @@
   "Return a seq of all entries in a map, m, where the key is derived from the
   keyword, k. If there are no matching keys, nil is returned."
   [m k]
-  (seq (filter #(isa? (key %) k) m)))
+  (seq (filter #(or (= (key %) k) (isa? (normalize-key (key %)) k)) m)))
 
 (defn find-derived-1
   "Return the map entry in a map, m, where the key is derived from the keyword,
@@ -172,7 +188,7 @@
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
   {:arglists '([key value])}
-  (fn [key value] key))
+  (fn [key value] (normalize-key key)))
 
 (defmulti halt-key!
   "Halt a running or suspended implementation associated with a key. This is
@@ -180,7 +196,7 @@
   database connection might be closed. This multimethod must be idempotent.
   The return value of this multimethod is discarded."
   {:arglists '([key value])}
-  (fn [key value] key))
+  (fn [key value] (normalize-key key)))
 
 (defmethod halt-key! :default [_ v])
 
@@ -190,7 +206,7 @@
   implementation. By default this multimethod calls init-key and ignores the
   additional argument."
   {:arglists '([key value old-value old-impl])}
-  (fn [key value old-value old-impl] key))
+  (fn [key value old-value old-impl] (normalize-key key)))
 
 (defmethod resume-key :default [k v _ _]
   (init-key k v))
@@ -201,7 +217,7 @@
   but it may be customized to do things like keep a server running, but buffer
   incoming requests until the server is resumed."
   {:arglists '([key value])}
-  (fn [key value] key))
+  (fn [key value] (normalize-key key)))
 
 (defmethod suspend-key! :default [k v]
   (halt-key! k v))
@@ -239,7 +255,7 @@
    (halt! system (missing-keys system keys))
    (build config keys (fn [k v]
                         (if (contains? system k)
-                          (resume-key k v (-> system meta ::build k) (system k))
+                          (resume-key k v (-> system meta ::build (get k)) (system k))
                           (init-key k v))))))
 
 (defn suspend!

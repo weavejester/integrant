@@ -10,6 +10,10 @@
   (swap! log conj [:init k v])
   [v])
 
+(defmethod ig/init-key ::x [k v]
+  (swap! log conj [:init k v])
+  :x)
+
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
 
@@ -17,11 +21,22 @@
   (swap! log conj [:resume k cfg cfg' sys])
   [cfg])
 
+(defmethod ig/resume-key ::x [k cfg cfg' sys]
+  (swap! log conj [:resume k cfg cfg' sys])
+  :rx)
+
 (defmethod ig/suspend-key! :default [k v]
   (swap! log conj [:suspend k v]))
 
 (deftest ref-test
   (is (ig/ref? (ig/ref :foo))))
+
+(deftest composite-keyword-test
+  (let [k (ig/composite-keyword [::a ::b])]
+    (is (isa? k ::a))
+    (is (isa? k ::b))
+    (is (identical? k (ig/composite-keyword [::a ::b])))
+    (is (not= k (ig/composite-keyword [::a ::c])))))
 
 (deftest expand-test
   (is (= (ig/expand {::a (ig/ref ::b), ::b 1})
@@ -58,22 +73,40 @@
 (deftest dependency-graph-test
   (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
 
-(deftest find-derived-test
-  (is (nil? (ig/find-derived-1 {} ::p)))
-  (is (= (ig/find-derived-1 {::a "x" ::p "y"} ::pp)
-         [::p "y"]))
-  (is (thrown-with-msg?
-       #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-       (re-pattern (str "Ambiguous key: " ::pp "\\. "
-                        "Found multiple candidates: " ::p ", " ::pp))
-       (ig/find-derived-1 {::a "x" ::p "y", ::pp "z"} ::pp))))
-
 (deftest find-derived-1-test
-  (is (nil? (ig/find-derived {} ::p)))
-  (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::pp)
-         [[::p "y"] [::pp "z"]]))
-  (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::ppp)
-         [[::p "y"] [::pp "z"]])))
+  (testing "missing key"
+    (is (nil? (ig/find-derived-1 {} ::p))))
+
+  (testing "derived key"
+    (is (= (ig/find-derived-1 {::a "x" ::p "y"} ::pp)
+           [::p "y"])))
+
+  (testing "ambigous key"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Ambiguous key: " ::pp "\\. "
+                          "Found multiple candidates: " ::p ", " ::pp))
+         (ig/find-derived-1 {::a "x" ::p "y", ::pp "z"} ::pp))))
+
+  (testing "composite key"
+    (is (= (ig/find-derived-1 {::a "x" [::b ::x] "y"} ::x)
+           [[::b ::x] "y"]))))
+
+(deftest find-derived-test
+  (testing "missing key"
+    (is (nil? (ig/find-derived {} ::p))))
+
+  (testing "derived key"
+    (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::pp)
+           [[::p "y"] [::pp "z"]])))
+
+  (testing "ambigous key"
+    (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::ppp)
+           [[::p "y"] [::pp "z"]])))
+
+  (testing "composite key"
+    (is (= (ig/find-derived {::a "x" [::b ::x] "y", [::b ::y] "z"} ::b)
+           [[[::b ::x] "y"] [[::b ::y] "z"]]))))
 
 (deftest init-test
   (testing "without keys"
@@ -95,7 +128,14 @@
     (let [m (ig/init {::p (ig/ref ::a), ::a 1} [::pp])]
       (is (= m {::p [[1]], ::a [1]}))
       (is (= @log [[:init ::a 1]
-                   [:init ::p [1]]])))))
+                   [:init ::p [1]]]))))
+
+  (testing "with composite keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), [::x ::b] 1})]
+      (is (= m {::a [:x], [::x ::b] :x}))
+      (is (= @log [[:init [::x ::b] 1]
+                   [:init ::a :x]])))))
 
 (deftest halt-test
   (testing "without keys"
@@ -128,7 +168,16 @@
       (is (= @log [[:init ::p 1]
                    [:init ::a [1]]
                    [:halt ::a [[1]]]
-                   [:halt ::p [1]]])))))
+                   [:halt ::p [1]]]))))
+
+  (testing "with composite keys"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref ::b), [::x ::b] 1})]
+      (ig/halt! m)
+      (is (= @log [[:init [::x ::b] 1]
+                   [:init ::a :x]
+                   [:halt ::a [:x]]
+                   [:halt [::x ::b] :x]])))))
 
 (deftest suspend-resume-test
   (testing "same configuration"
@@ -155,7 +204,20 @@
                    [:suspend ::a [[1]]]
                    [:suspend ::b [1]]
                    [:halt ::a [[1]]]
-                   [:resume ::b 1 1 [1]]])))))
+                   [:resume ::b 1 1 [1]]]))))
+
+  (testing "composite keys"
+    (reset! log [])
+    (let [c  {::a (ig/ref ::x), [::b ::x] 1}
+          m  (ig/init c)
+          _  (ig/suspend! m)
+          m' (ig/resume c m)]
+      (is (= @log [[:init [::b ::x] 1]
+                   [:init ::a :x]
+                   [:suspend ::a [:x]]
+                   [:suspend [::b ::x] :x]
+                   [:resume [::b ::x] 1 1 :x]
+                   [:resume ::a :rx :x [:x]]])))))
 
 (deftest invalid-configs-test
   (testing "ambiguous refs"
