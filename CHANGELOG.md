@@ -1,3 +1,7 @@
+## 0.3.0 (2017-03-17)
+
+* Added composite keys
+
 ## 0.2.3 (2017-03-09)
 
 * Changed `build` to ignore errors for irrelevant keys

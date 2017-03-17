@@ -1,4 +1,4 @@
-(defproject integrant "0.2.3"
+(defproject integrant "0.3.0"
   :description "Micro-framework for data-driven architecture"
   :url "https://github.com/weavejester/integrant"
   :license {:name "The MIT License"
