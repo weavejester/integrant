@@ -247,6 +247,44 @@ We can also use it as a reference, but only if the reference is
 unambiguous, and only refers to one key in the configuration.
 
 
+### Composite keywords
+
+Sometimes it's useful to have two keys of the same type in your
+configuration. For example, you may want to run two Ring adapters on
+different ports.
+
+One way would be to create two new keywords, derived from a common
+parent:
+
+```clojure
+(derive :example/web-1 :adapter/jetty)
+(derive :example/web-2 :adapter/jetty)
+```
+
+You could then write a configuration like:
+
+```edn
+{:example/web-1 {:port 8080, :handler #ref :handler/greet}
+ :example/web-2 {:port 8081, :handler #ref :handler/greet}
+ :handler/greet {:name "Alice"}}
+```
+
+However, you could also make use of composite keys. If your
+configuration contains a key that is a vector of keywords, Integrant
+treats it as being derived from all the keywords inside it.
+
+So your could also write:
+
+```edn
+{[:adapter/jetty :example/web-1] {:port 8080, :handler #ref :handler/greet}
+ [:adapter/jetty :example/web-2] {:port 8081, :handler #ref :handler/greet}
+ :handler/greet {:name "Alice"}}
+```
+
+This syntax sugar allows you to avoid adding extra `derive`
+instructions to your source code.
+
+
 ### Loading namespaces
 
 It can be hard to remember to load all the namespaces that contain the
