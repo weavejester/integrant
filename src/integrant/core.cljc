@@ -85,11 +85,12 @@
       (let [readers (merge {'ref ref} (:readers opts {}))]
         (edn/read-string (assoc opts :readers readers) s)))))
 
-#?(:clj
+#?(:clj 
    (defn- keyword->namespaces [kw]
-     (if-let [ns (namespace kw)]
-       [(symbol ns)
-        (symbol (str ns "." (name kw)))])))
+     (let [kw (if (vector? kw) (first kw) kw)]
+       (if-let [ns (namespace kw)]
+         [(symbol ns)
+          (symbol (str ns "." (name kw)))]))))
 
 #?(:clj
    (defn- try-require [sym]
