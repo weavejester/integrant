@@ -1,3 +1,7 @@
+## 0.3.2 (2017-03-28)
+
+* Fixed ordering problem in `build` introduced in 0.3.1 (#16)
+
 ## 0.3.1 (2017-03-28)
 
 * Fixed `load-namespaces` for composite keys (#14)
