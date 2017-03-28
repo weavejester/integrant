@@ -92,6 +92,12 @@
         (symbol (str ns "." (name kw)))])))
 
 #?(:clj
+   (defn- key->namespaces [k]
+     (if (vector? k)
+       (mapcat keyword->namespaces k)
+       (keyword->namespaces k))))
+
+#?(:clj
    (defn- try-require [sym]
      (try (do (require sym) sym)
           (catch java.io.FileNotFoundException _))))
@@ -105,7 +111,7 @@
      completion, a list of all loaded namespaces will be returned."
      [config]
      (doall (->> (keys config)
-                 (mapcat keyword->namespaces)
+                 (mapcat key->namespaces)
                  (distinct)
                  (keep try-require)))))
 

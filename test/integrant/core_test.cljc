@@ -60,12 +60,24 @@
    (deftest load-namespaces-test
      (remove-lib 'integrant.test.foo)
      (remove-lib 'integrant.test.bar)
-     (is (= (ig/load-namespaces {:integrant.test/foo 1, :integrant.test.bar/baz 2})
-            '(integrant.test.foo integrant.test.bar)))
+     (remove-lib 'integrant.test.baz)
+     (remove-lib 'integrant.test.quz)
+     (is (= (ig/load-namespaces {:integrant.test/foo 1
+                                 :integrant.test.bar/wuz 2
+                                 [:integrant.test/baz :integrant.test/x] 3
+                                 [:integrant.test/y :integrant.test/quz] 4})
+            '(integrant.test.foo
+              integrant.test.bar
+              integrant.test.baz
+              integrant.test.quz)))
      (is (some? (find-ns 'integrant.test.foo)))
      (is (some? (find-ns 'integrant.test.bar)))
+     (is (some? (find-ns 'integrant.test.baz)))
+     (is (some? (find-ns 'integrant.test.quz)))
      (is (= (some-> 'integrant.test.foo/message find-var var-get) "foo"))
-     (is (= (some-> 'integrant.test.bar/message find-var var-get) "bar"))))
+     (is (= (some-> 'integrant.test.bar/message find-var var-get) "bar"))
+     (is (= (some-> 'integrant.test.baz/message find-var var-get) "baz"))
+     (is (= (some-> 'integrant.test.quz/message find-var var-get) "quz"))))
 
 (derive ::p ::pp)
 (derive ::pp ::ppp)
