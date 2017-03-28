@@ -200,7 +200,7 @@
        (catch #?(:clj Throwable :cljs :default) t
          (throw (build-exception system f k v t)))))
 
-(defn- build-key [f system k v]
+(defn- build-key [f system [k v]]
   (let [v' (expand-key system v)]
     (-> system
         (assoc k (try-build-action system f k v'))
@@ -218,9 +218,9 @@
       (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
     (when-let [refs (seq (missing-refs relevant-config))]
       (throw (missing-refs-exception config refs)))
-    (reduce-kv (partial build-key f)
-               (with-meta {} {::origin config})
-               relevant-config)))
+    (reduce (partial build-key f)
+            (with-meta {} {::origin config})
+            (map (fn [k] [k (config k)]) relevant-keys))))
 
 (defn expand
   "Replace all refs with the values they correspond to."

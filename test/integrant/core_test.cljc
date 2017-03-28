@@ -153,7 +153,17 @@
     (let [m (ig/init {::a (ig/ref ::b), [::x ::b] 1})]
       (is (= m {::a [:x], [::x ::b] :x}))
       (is (= @log [[:init [::x ::b] 1]
-                   [:init ::a :x]])))))
+                   [:init ::a :x]]))))
+
+  (testing "large config"
+    (is (= (ig/init {:a/a1 {} :a/a2 {:_ (ig/ref :a/a1)}
+                     :a/a3 {} :a/a4 {} :a/a5 {}
+                     :a/a6 {} :a/a7 {} :a/a8 {}
+                     :a/a9 {} :a/a10 {}})
+           {:a/a1 [{}] :a/a2 [{:_ [{}]}]
+            :a/a3 [{}] :a/a4 [{}] :a/a5 [{}]
+            :a/a6 [{}] :a/a7 [{}] :a/a8 [{}]
+            :a/a9 [{}] :a/a10 [{}]}))))
 
 (deftest halt-test
   (testing "without keys"
