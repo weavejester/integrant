@@ -1,3 +1,8 @@
+## 0.3.1 (2017-03-28)
+
+* Fixed `load-namespaces` for composite keys (#14)
+* Wrapped exceptions for `build`, `run!` and `reverse-run` in `ExceptionInfo` (#11)
+
 ## 0.3.0 (2017-03-17)
 
 * Added composite keys
