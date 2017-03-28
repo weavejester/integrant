@@ -164,24 +164,24 @@
   (doseq [k (reverse-dependent-keys (-> system meta ::origin) keys)]
     (f k (system k))))
 
-(defn- build-exception [sys f k v t]
+(defn- build-exception [system f k v t]
   (ex-info (str "Error on key " k " when building system")
            {:reason   ::build-threw-exception
-            :system   sys
+            :system   system
             :function f
             :key      k
             :value    v}
            t))
 
-(defn- try-build-action [sys f k v]
+(defn- try-build-action [system f k v]
   (try (f k v)
        (catch #?(:clj Throwable :cljs :default) t
-         (throw (build-exception sys f k v t)))))
+         (throw (build-exception system f k v t)))))
 
-(defn- build-key [f m k v]
-  (let [v' (expand-key m v)]
-    (-> m
-        (assoc k (try-build-action m f k v'))
+(defn- build-key [f system k v]
+  (let [v' (expand-key system v)]
+    (-> system
+        (assoc k (try-build-action system f k v'))
         (vary-meta assoc-in [::build k] v'))))
 
 (defn build
