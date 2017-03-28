@@ -14,11 +14,14 @@
   (swap! log conj [:init k v])
   :x)
 
-(defmethod ig/init-key ::error [_ _]
+(defmethod ig/init-key ::error-init [_ _]
   (throw (ex-info "Testing" {:reason ::test})))
 
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
+
+(defmethod ig/halt-key! ::error-halt [_ _]
+  (throw (ex-info "Testing" {:reason ::test})))
 
 (defmethod ig/resume-key :default [k cfg cfg' sys]
   (swap! log conj [:resume k cfg cfg' sys])
@@ -288,17 +291,40 @@
 
 (deftest wrapped-exception-test
   (testing "exception when building"
-    (let [ex (try (ig/init {::a 1 ::error (ig/ref ::a)}) nil
+    (let [ex (try (ig/init {::a 1, ::error-init (ig/ref ::a)}) nil
                   (catch #?(:clj Throwable :cljs :default) t t))]
       (is (some? ex))
       (is (= (#?(:clj .getMessage :cljs ex-message) ex)
-             (str "Error on key " ::error " when building system")))
+             (str "Error on key " ::error-init " when building system")))
       (is (= (ex-data ex)
              {:reason   ::ig/build-threw-exception
               :system   {::a [1]}
               :function ig/init-key
-              :key      ::error
+              :key      ::error-init
               :value    [1]}))
+      (let [cause (#?(:clj .getCause :cljs ex-cause) ex)]
+        (is (some? cause))
+        (is (= (#?(:clj .getMessage :cljs ex-message) cause) "Testing"))
+        (is (= (ex-data cause) {:reason ::test})))))
+
+  (testing "exception when running"
+    (let [system (ig/init {::a 1
+                           ::error-halt (ig/ref ::a)
+                           ::b (ig/ref ::error-halt)
+                           ::c (ig/ref ::b)})
+          ex     (try (ig/halt! system) 
+                      (catch #?(:clj Throwable :cljs :default) t t))]
+      (is (some? ex))
+      (is (= (#?(:clj .getMessage :cljs ex-message) ex)
+             (str "Error on key " ::error-halt " when running system")))
+      (is (= (ex-data ex)
+             {:reason         ::ig/run-threw-exception
+              :system         {::a [1], ::error-halt [[1]], ::b [[[1]]], ::c [[[[1]]]]}
+              :completed-keys '(::c ::b)
+              :remaining-keys '(::a)
+              :function       ig/halt-key!
+              :key            ::error-halt
+              :value          [[1]]}))
       (let [cause (#?(:clj .getCause :cljs ex-cause) ex)]
         (is (some? cause))
         (is (= (#?(:clj .getMessage :cljs ex-message) cause) "Testing"))

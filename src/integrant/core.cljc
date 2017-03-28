@@ -146,14 +146,37 @@
 (defn- reverse-dependent-keys [config keys]
   (reverse (find-keys config keys dep/transitive-dependents-set)))
 
+(defn- run-exception [system completed remaining f k v t]
+  (ex-info (str "Error on key " k " when running system")
+           {:reason ::run-threw-exception
+            :system system
+            :completed-keys (reverse completed)
+            :remaining-keys (rest remaining)
+            :function f
+            :key   k
+            :value v}
+           t))
+
+(defn- try-run-action [system completed remaining f k]
+  (let [v (system k)]
+    (try (f k v)
+         (catch #?(:clj Throwable :cljs :default) t
+           (throw (run-exception system completed remaining f k v t))))))
+
+(defn- run-loop [system keys f]
+  (loop [completed (), remaining keys]
+    (when (seq remaining)
+      (let [k (first remaining)]
+        (try-run-action system completed remaining f k)
+        (recur (cons k completed) (rest remaining))))))
+
 (defn run!
   "Apply a side-effectful function f to each key value pair in a system map.
   Keys are traversed in dependency order. The function should take two
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (doseq [k (dependent-keys (-> system meta ::origin) keys)]
-    (f k (system k))))
+  (run-loop system (dependent-keys (-> system meta ::origin) keys) f))
 
 (defn reverse-run!
   "Apply a side-effectful function f to each key value pair in a system map.
@@ -161,8 +184,7 @@
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (doseq [k (reverse-dependent-keys (-> system meta ::origin) keys)]
-    (f k (system k))))
+  (run-loop system (reverse-dependent-keys (-> system meta ::origin) keys) f))
 
 (defn- build-exception [system f k v t]
   (ex-info (str "Error on key " k " when building system")
