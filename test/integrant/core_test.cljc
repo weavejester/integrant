@@ -301,6 +301,5 @@
               :value    [1]}))
       (let [cause (#?(:clj .getCause :cljs ex-cause) ex)]
         (is (some? cause))
-        (is (instance? Exception cause))
-        (is (= (#?(:clj .getMessage :cljs ex-message) cause)
-               "Testing"))))))
+        (is (= (#?(:clj .getMessage :cljs ex-message) cause) "Testing"))
+        (is (= (ex-data cause) {:reason ::test}))))))
