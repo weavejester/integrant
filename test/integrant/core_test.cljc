@@ -14,6 +14,9 @@
   (swap! log conj [:init k v])
   :x)
 
+(defmethod ig/init-key ::error [_ _]
+  (throw (ex-info "Testing" {:reason ::test})))
+
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
 
@@ -282,3 +285,22 @@
             [[:test :a [:build :a [:build :b 1]]]
              [:test :b [:build :b 1]]]]
            (test-log ig/reverse-run! system)))))
+
+(deftest wrapped-exception-test
+  (testing "exception when building"
+    (let [ex (try (ig/init {::a 1 ::error (ig/ref ::a)}) nil
+                  (catch #?(:clj Throwable :cljs :default) t t))]
+      (is (some? ex))
+      (is (= (#?(:clj .getMessage :cljs ex-message) ex)
+             (str "Error on key " ::error " when building system")))
+      (is (= (ex-data ex)
+             {:reason   ::ig/build-threw-exception
+              :system   {::a [1]}
+              :function ig/init-key
+              :key      ::error
+              :value    [1]}))
+      (let [cause (#?(:clj .getCause :cljs ex-cause) ex)]
+        (is (some? cause))
+        (is (instance? Exception cause))
+        (is (= (#?(:clj .getMessage :cljs ex-message) cause)
+               "Testing"))))))
