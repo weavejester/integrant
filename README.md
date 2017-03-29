@@ -134,6 +134,9 @@ Like Component, `halt!` shuts down the system in reverse dependency
 order. Unlike Component, `halt!` is entirely side-effectful. The
 return value should be ignored, and the system structure discarded.
 
+It's also important that `halt-key!` is **idempotent**. We should be
+able to run it multiple times on the same key without issue.
+
 Integrant marks functions that are entirely side-effectful with an
 ending `!`. You should ignore the return value of any function ending
 in a `!`.
@@ -162,6 +165,9 @@ The `suspend!` function acts like `halt!`:
 By default this functions the same as `halt!`, but we can customize
 the behavior with the `suspend-key!` multimethod to keep open
 connections and resources that `halt-key!` would close.
+
+Like `halt-key!`, `suspend-key!` should be both side-effectful and
+idempotent.
 
 The `resume` function acts like `init`, but takes an additional
 argument specifying a suspended system:
