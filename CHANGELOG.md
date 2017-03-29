@@ -1,3 +1,7 @@
+## 0.3.3 (2017-03-29)
+
+* Fixed error caused by sorting keys in exceptions (#17)
+
 ## 0.3.2 (2017-03-28)
 
 * Fixed ordering problem in `build` introduced in 0.3.1 (#16)
