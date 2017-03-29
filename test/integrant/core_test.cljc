@@ -252,7 +252,8 @@
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "Ambiguous key: " ::ppp "\\. "
-                          "Found multiple candidates: " ::p ", " ::pp))
+                          "Found multiple candidates: "
+                          "(" ::p ", " ::pp "|" ::pp ", " ::p ")"))
          (ig/init {::a (ig/ref ::ppp), ::p 1, ::pp 2}))))
 
   (testing "missing refs"

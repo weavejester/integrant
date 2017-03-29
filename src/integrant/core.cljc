@@ -42,7 +42,7 @@
 
 (defn- ambiguous-key-exception [config key matching-keys]
   (ex-info (str "Ambiguous key: " key ". Found multiple candidates: "
-                (str/join ", " (sort matching-keys)))
+                (str/join ", " matching-keys))
            {:reason ::ambiguous-key
             :config config
             :key    key
@@ -116,7 +116,7 @@
                  (keep try-require)))))
 
 (defn- missing-refs-exception [config refs]
-  (ex-info (str "Missing definitions for refs: " (str/join ", " (sort refs)))
+  (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
            {:reason ::missing-refs
             :config config
             :missing-refs refs}))
