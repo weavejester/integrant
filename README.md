@@ -37,7 +37,10 @@ In Integrant, anything can be dependent on anything else. The
 dependencies are resolved from the configuration before it's
 initialized into a system.
 
+A more in depth rationale and description of Integrant can be found in the following [Skillscast][].
+
 [edn]: https://github.com/edn-format/edn
+[Skillscast]: https://skillsmatter.com/skillscasts/9820-enter-integrant-a-micro-framework-for-data-driven-architecture-with-james-reeves
 
 ## Installation
 
