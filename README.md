@@ -45,6 +45,10 @@ To install, add the following to your project `:dependencies`:
 
     [integrant "0.3.3"]
 
+## Presentations
+
+* [Enter Integrant](https://skillsmatter.com/skillscasts/9820-enter-integrant)
+
 ## Usage
 
 ### Configurations
