@@ -89,7 +89,7 @@ implement it. The `init-key` multimethod takes two arguments, a key
 and its corresponding value, and tells Integrant how to initialize it:
 
 ```clojure
-(require '[ring.jetty.adapter :as jetty]
+(require '[ring.adapter.jetty :as jetty]
          '[ring.util.response :as resp])
 
 (defmethod ig/init-key :adapter/jetty [_ {:keys [handler] :as opts}]
