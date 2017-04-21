@@ -52,9 +52,10 @@
 
 #?(:clj
    (deftest read-string-test
-     (is (= (ig/read-string "{:foo/a #ref :foo/b, :foo/b 1}")
+     (is (= (ig/read-string "{:foo/a #ig/ref :foo/b, :foo/b 1}")
             {:foo/a (ig/ref :foo/b), :foo/b 1}))
-     (is (= (ig/read-string {:readers {'var find-var}} "{:foo/a #var clojure.core/+}")
+     (is (= (ig/read-string {:readers {'test/var find-var}}
+                            "{:foo/a #test/var clojure.core/+}")
             {:foo/a #'+}))))
 
 #?(:clj

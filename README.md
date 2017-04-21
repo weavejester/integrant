@@ -71,7 +71,7 @@ For example:
 Alternatively, you can specify your configuration as pure edn:
 
 ```edn
-{:adapter/jetty {:port 8080, :handler #ref :handler/greet}
+{:adapter/jetty {:port 8080, :handler #ig/ref :handler/greet}
  :handler/greet {:name "Alice"}}
 ```
 
@@ -274,8 +274,8 @@ parent:
 You could then write a configuration like:
 
 ```edn
-{:example/web-1 {:port 8080, :handler #ref :handler/greet}
- :example/web-2 {:port 8081, :handler #ref :handler/greet}
+{:example/web-1 {:port 8080, :handler #ig/ref :handler/greet}
+ :example/web-2 {:port 8081, :handler #ig/ref :handler/greet}
  :handler/greet {:name "Alice"}}
 ```
 
@@ -286,8 +286,8 @@ treats it as being derived from all the keywords inside it.
 So your could also write:
 
 ```edn
-{[:adapter/jetty :example/web-1] {:port 8080, :handler #ref :handler/greet}
- [:adapter/jetty :example/web-2] {:port 8081, :handler #ref :handler/greet}
+{[:adapter/jetty :example/web-1] {:port 8080, :handler #ig/ref :handler/greet}
+ [:adapter/jetty :example/web-2] {:port 8081, :handler #ig/ref :handler/greet}
  :handler/greet {:name "Alice"}}
 ```
 
