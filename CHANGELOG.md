@@ -1,3 +1,7 @@
+## 0.4.0 (2017-04-21)
+
+* **BREAKING CHANGE:** Changed `#ref` data reader to `#ig/ref` (#12)
+
 ## 0.3.3 (2017-03-29)
 
 * Fixed error caused by sorting keys in exceptions (#17)
