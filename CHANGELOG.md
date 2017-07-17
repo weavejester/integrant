@@ -1,3 +1,7 @@
+## 0.4.1 (2017-07-17)
+
+* Fixed halting of missing keys when resuming a suspended system
+
 ## 0.4.0 (2017-04-21)
 
 * **BREAKING CHANGE:** Changed `#ref` data reader to `#ig/ref` (#12)
