@@ -235,6 +235,19 @@
                    [:halt ::a [[1]]]
                    [:resume ::b 1 1 [1]]]))))
 
+  (testing "missing refs"
+    (reset! log [])
+    (let [c  {::a {:b (ig/ref ::b)}, ::b 1}
+          m  (ig/init c)
+          _  (ig/suspend! m)
+          m' (ig/resume {::a []} m)]
+      (is (= @log [[:init ::b 1]
+                   [:init ::a {:b [1]}]
+                   [:suspend ::a [{:b [1]}]]
+                   [:suspend ::b [1]]
+                   [:halt ::b [1]]
+                   [:resume ::a [] {:b [1]} [{:b [1]}]]]))))
+
   (testing "composite keys"
     (reset! log [])
     (let [c  {::a (ig/ref ::x), [::b ::x] 1}

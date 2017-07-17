@@ -286,6 +286,11 @@
 (defn- missing-keys [system ks]
   (remove (set ks) (keys system)))
 
+(defn- halt-missing-keys! [system keys]
+  (let [graph (-> system meta ::origin dependency-graph)]
+    (doseq [k (sort (dep/topo-comparator graph) (missing-keys system keys))]
+      (halt-key! k (system k)))))
+
 (defn resume
   "Turn a config map into a system map, reusing resources from an existing
   system when it's possible to do so. Keys are traversed in dependency order,
@@ -295,7 +300,7 @@
    (resume config system (keys config)))
   ([config system keys]
    {:pre [(map? config) (map? system) (some-> system meta ::origin)]}
-   (halt! system (missing-keys system keys))
+   (halt-missing-keys! system keys)
    (build config keys (fn [k v]
                         (if (contains? system k)
                           (resume-key k v (-> system meta ::build (get k)) (system k))
