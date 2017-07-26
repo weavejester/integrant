@@ -35,7 +35,8 @@
   (swap! log conj [:suspend k v]))
 
 (deftest ref-test
-  (is (ig/ref? (ig/ref :foo))))
+  (is (ig/ref? (ig/ref ::foo)))
+  (is (ig/ref? (ig/ref [::foo ::bar]))))
 
 (deftest composite-keyword-test
   (let [k (ig/composite-keyword [::a ::b])]
@@ -155,6 +156,17 @@
       (is (= m {::a [:x], [::x ::b] :x}))
       (is (= @log [[:init [::x ::b] 1]
                    [:init ::a :x]]))))
+
+  (testing "with composite refs"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/ref [::b ::c]), [::b ::c] 1, [::b ::d] 2})]
+      (is (= m {::a [[1]], [::b ::c] [1], [::b ::d] [2]}))
+      (is (or (= @log [[:init [::b ::c] 1]
+                       [:init ::a [1]]
+                       [:init [::b ::d] 2]])
+              (= @log [[:init [::b ::d] 2]
+                       [:init [::b ::c] 1]
+                       [:init ::a [1]]])))))
 
   (testing "large config"
     (is (= (ig/init {:a/a1 {} :a/a2 {:_ (ig/ref :a/a1)}

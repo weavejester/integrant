@@ -11,7 +11,8 @@
 (defn ref
   "Create a reference to a top-level key in a config map."
   [key]
-  {:pre [(keyword? key)]}
+  {:pre [(or (keyword? key)
+             (and (vector? key) (every? keyword? key)))]}
   (->Ref key))
 
 (defn ref?
