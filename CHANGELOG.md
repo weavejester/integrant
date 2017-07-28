@@ -1,3 +1,7 @@
+## 0.5.0 (2017-07-28)
+
+* Added composite references
+
 ## 0.4.1 (2017-07-17)
 
 * Fixed halting of missing keys when resuming a suspended system
