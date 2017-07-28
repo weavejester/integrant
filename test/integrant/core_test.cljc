@@ -1,7 +1,7 @@
 (ns integrant.core-test
   (:require [integrant.core :as ig]
    #?(:clj  [clojure.test :refer :all]
-      :cljs [cljs.test :refer-macros [deftest is testing]])
+      :cljs [cljs.test :refer-macros [are deftest is testing]])
             [com.stuartsierra.dependency :as dep]))
 
 (def log (atom []))
