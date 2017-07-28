@@ -49,11 +49,21 @@
             :key    key
             :matching-keys matching-keys}))
 
+(defn derived-from?
+  "Return true if a key is derived from candidate keyword or vector of
+  keywords."
+  [key candidate]
+  (let [key (normalize-key key)]
+    (if (vector? candidate)
+      (every? #(isa? key %) candidate)
+      (isa? key candidate))))
+
 (defn find-derived
   "Return a seq of all entries in a map, m, where the key is derived from the
-  keyword, k. If there are no matching keys, nil is returned."
+  a candidate key, k. If there are no matching keys, nil is returned. The
+  candidate key may be a keyword, or vector of keywords."
   [m k]
-  (seq (filter #(or (= (key %) k) (isa? (normalize-key (key %)) k)) m)))
+  (seq (filter #(or (= (key %) k) (derived-from? (key %) k)) m)))
 
 (defn find-derived-1
   "Return the map entry in a map, m, where the key is derived from the keyword,

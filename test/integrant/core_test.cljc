@@ -93,6 +93,19 @@
 (deftest dependency-graph-test
   (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
 
+(derive ::ap ::a)
+(derive ::ap ::p)
+
+(deftest derived-from?-test
+  (are [a b] (ig/derived-from? a b)
+    ::p           ::p
+    ::p           ::pp
+    ::p           ::ppp
+    ::ap          [::a ::p]
+    ::ap          [::a ::pp]
+    [::a ::p]     [::a ::pp]
+    [::a ::b ::p] [::a ::ppp]))
+
 (deftest find-derived-1-test
   (testing "missing key"
     (is (nil? (ig/find-derived-1 {} ::p))))
@@ -159,13 +172,13 @@
 
   (testing "with composite refs"
     (reset! log [])
-    (let [m (ig/init {::a (ig/ref [::b ::c]), [::b ::c] 1, [::b ::d] 2})]
-      (is (= m {::a [[1]], [::b ::c] [1], [::b ::d] [2]}))
-      (is (or (= @log [[:init [::b ::c] 1]
+    (let [m (ig/init {::a (ig/ref [::b ::c]), [::b ::c ::e] 1, [::b ::d] 2})]
+      (is (= m {::a [[1]], [::b ::c ::e] [1], [::b ::d] [2]}))
+      (is (or (= @log [[:init [::b ::c ::e] 1]
                        [:init ::a [1]]
                        [:init [::b ::d] 2]])
               (= @log [[:init [::b ::d] 2]
-                       [:init [::b ::c] 1]
+                       [:init [::b ::c ::e] 1]
                        [:init ::a [1]]])))))
 
   (testing "large config"
