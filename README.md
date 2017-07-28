@@ -257,7 +257,7 @@ We can also use it as a reference, but only if the reference is
 unambiguous, and only refers to one key in the configuration.
 
 
-### Composite keywords
+### Composite keys
 
 Sometimes it's useful to have two keys of the same type in your
 configuration. For example, you may want to run two Ring adapters on
@@ -293,6 +293,25 @@ So your could also write:
 
 This syntax sugar allows you to avoid adding extra `derive`
 instructions to your source code.
+
+
+### Composite references
+
+Composite references complement composite keys. A normal reference
+matches any key derived from the value of the reference. A composite
+reference matches any key derived from every value in a vector.
+
+For example:
+
+```edn
+{[:group/a :adapter/jetty] {:port 8080, :handler #ig/ref [:group/a :handler/greet]}
+ [:group/a :handler/greet] {:name "Alice"}
+ [:group/b :adapter/jetty] {:port 8081, :handler #ig/ref [:group/b :handler/greet]}
+ [:group/b :handler/greet] {:name "Bob"}}
+```
+
+One use of composite references is to provide a way of grouping keys
+in a configuration.
 
 
 ### Loading namespaces
