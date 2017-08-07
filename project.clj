@@ -3,9 +3,9 @@
   :url "https://github.com/weavejester/integrant"
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [com.stuartsierra/dependency "0.2.0"]]
-  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.7.228"]]}}
+  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.854"]]}}
   :plugins [[lein-doo "0.1.7"]]
   :cljsbuild
   {:builds [{:id "test-phantom"
