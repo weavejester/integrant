@@ -4,6 +4,7 @@
     #?(:clj [clojure.edn :as edn])
             [clojure.walk :as walk]
             [clojure.set :as set]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]))
 
 (defrecord Ref [key])
@@ -211,8 +212,9 @@
        (catch #?(:clj Throwable :cljs :default) t
          (throw (build-exception system f k v t)))))
 
-(defn- build-key [f system [k v]]
+(defn- build-key [f assertf system [k v]]
   (let [v' (expand-key system v)]
+    (assertf k v')
     (-> system
         (assoc k (try-build-action system f k v'))
         (vary-meta assoc-in [::build k] v'))))
@@ -220,18 +222,22 @@
 (defn build
   "Apply a function f to each key value pair in a configuration map. Keys are
   traversed in dependency order, and any references in the value expanded. The
-  function should take two arguments, a key and value, and return a new value."
-  [config keys f]
-  {:pre [(map? config)]}
-  (let [relevant-keys   (dependent-keys config keys)
-        relevant-config (select-keys config relevant-keys)]
-    (when-let [ref (first (ambiguous-refs relevant-config))]
-      (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
-    (when-let [refs (seq (missing-refs relevant-config))]
-      (throw (missing-refs-exception config refs)))
-    (reduce (partial build-key f)
-            (with-meta {} {::origin config})
-            (map (fn [k] [k (config k)]) relevant-keys))))
+  function should take two arguments, a key and value, and return a new value.
+  An optional fourth argument, assertf, may be supplied to provide an assertion
+  check."
+  ([config keys f]
+   (build config keys f (fn [_ _])))
+  ([config keys f assertf]
+   {:pre [(map? config)]}
+   (let [relevant-keys   (dependent-keys config keys)
+         relevant-config (select-keys config relevant-keys)]
+     (when-let [ref (first (ambiguous-refs relevant-config))]
+       (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
+     (when-let [refs (seq (missing-refs relevant-config))]
+       (throw (missing-refs-exception config refs)))
+     (reduce (partial build-key f assertf)
+             (with-meta {} {::origin config})
+             (map (fn [k] [k (config k)]) relevant-keys)))))
 
 (defn expand
   "Replace all refs with the values they correspond to."
@@ -276,6 +282,18 @@
 (defmethod suspend-key! :default [k v]
   (halt-key! k v))
 
+(defmulti init-spec
+  "Return a spec for the supplied key to be used before a key is initiated."
+  identity)
+
+(defmethod init-spec :default [_] nil)
+
+(defn assert-key
+  "Assert if a value associated with a key is valid, throwing an ex-info
+  otherwise."
+  [key value]
+  (when-let [spec (init-spec key)] (s/assert spec value)))
+
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
   order, initiated via the init-key multimethod, then the refs associated with
@@ -284,7 +302,7 @@
    (init config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (build config keys init-key)))
+   (build config keys init-key assert-key)))
 
 (defn halt!
   "Halt a system map by applying halt-key! in reverse dependency order."

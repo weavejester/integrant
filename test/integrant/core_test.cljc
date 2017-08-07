@@ -2,7 +2,10 @@
   (:require [integrant.core :as ig]
    #?(:clj  [clojure.test :refer :all]
       :cljs [cljs.test :refer-macros [are deftest is testing]])
-            [com.stuartsierra.dependency :as dep]))
+            [com.stuartsierra.dependency :as dep]
+            [clojure.spec.alpha :as s]))
+
+(s/check-asserts true)
 
 (def log (atom []))
 
@@ -16,6 +19,10 @@
 
 (defmethod ig/init-key ::error-init [_ _]
   (throw (ex-info "Testing" {:reason ::test})))
+
+(defmethod ig/init-key  ::k [_ v] v)
+(defmethod ig/init-key  ::n [_ v] (inc v))
+(defmethod ig/init-spec ::n [_] nat-int?)
 
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
@@ -189,7 +196,17 @@
            {:a/a1 [{}] :a/a2 [{:_ [{}]}]
             :a/a3 [{}] :a/a4 [{}] :a/a5 [{}]
             :a/a6 [{}] :a/a7 [{}] :a/a8 [{}]
-            :a/a9 [{}] :a/a10 [{}]}))))
+            :a/a9 [{}] :a/a10 [{}]})))
+
+  (testing "with passing specs"
+    (let [m (ig/init {::n (ig/ref ::k), ::k 1})]
+      (is (= m {::n 2, ::k 1}))))
+
+  (testing "with failing specs"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+         #"Spec assertion failed"
+         (ig/init {::n (ig/ref ::k), ::k 1.1})))))
 
 (deftest halt-test
   (testing "without keys"
