@@ -214,7 +214,7 @@
 
 (defn- build-key [f assertf system [k v]]
   (let [v' (expand-key system v)]
-    (assertf k v')
+    (assertf system k v')
     (-> system
         (assoc k (try-build-action system f k v'))
         (vary-meta assoc-in [::build k] v'))))
@@ -224,9 +224,9 @@
   traversed in dependency order, and any references in the value expanded. The
   function should take two arguments, a key and value, and return a new value.
   An optional fourth argument, assertf, may be supplied to provide an assertion
-  check."
+  check on the system, key and expanded value."
   ([config keys f]
-   (build config keys f (fn [_ _])))
+   (build config keys f (fn [_ _ _])))
   ([config keys f assertf]
    {:pre [(map? config)]}
    (let [relevant-keys   (dependent-keys config keys)
@@ -288,11 +288,23 @@
 
 (defmethod init-spec :default [_] nil)
 
+(defn- spec-exception [system k v spec ed]
+  (ex-info (str "Spec failed on key " k " when building system\n"
+                (with-out-str (s/explain-out ed)))
+           {:reason   ::build-failed-spec
+            :system   system
+            :key      k
+            :value    v
+            :spec     spec
+            :explain  ed}))
+
 (defn assert-key
   "Assert if a value associated with a key is valid, throwing an ex-info
   otherwise."
-  [key value]
-  (when-let [spec (init-spec key)] (s/assert spec value)))
+  [system key value]
+  (when-let [spec (init-spec key)]
+    (when-not (s/valid? spec value)
+      (throw (spec-exception system key value spec (s/explain-data spec value))))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency

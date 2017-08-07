@@ -204,8 +204,8 @@
 
   (testing "with failing specs"
     (is (thrown-with-msg?
-         #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
-         #"Spec assertion failed"
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Spec failed on key " ::n " when building system"))
          (ig/init {::n (ig/ref ::k), ::k 1.1})))))
 
 (deftest halt-test
