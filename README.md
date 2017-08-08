@@ -314,6 +314,50 @@ One use of composite references is to provide a way of grouping keys
 in a configuration.
 
 
+### Specs
+
+It would be incorrect to write specs directly against the keys used by
+Integrant, as the same key will used in the configuration, during
+initiation, and in the resulting system. All will likely have
+different values.
+
+To resolve this, Integrant has an `pre-init-spec` multimethod that can
+extended to provide Integrant with a spec to test the value after the
+references are resolved, but before they are initiated. The resulting
+spec is checked directly before `init-key`, and an exception is raised
+if it fails.
+
+Here's how our two example keys would be specced out:
+
+```clojre
+(require '[clojure.spec.alpha :as s])
+
+(s/def ::port pos-int?)
+(s/def ::handler fn?)
+
+(defmethod ig/pre-init-spec :adapter/jetty [_]
+  (s/keys :req-un [::port ::handler]))
+  
+(s/def ::name string?)
+
+(defmethod ig/pre-init-spec :handler/greet [_]
+  (s/keys :req-un [::name]))
+```
+
+If we try to `init` an invalid configuration:
+
+```clojure
+(ig/init {:adapter/jetty {:port 3000} :handler/greet {:name "foo"}})
+```
+
+Then an `ExceptionInfo` is thrown explaining the error:
+
+```
+ExceptionInfo Spec failed on key :adapter/jetty when building system
+val: {:port 3000} fails predicate: (contains? % :handler)
+```
+
+
 ### Loading namespaces
 
 It can be hard to remember to load all the namespaces that contain the
