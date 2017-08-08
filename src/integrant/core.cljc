@@ -282,11 +282,12 @@
 (defmethod suspend-key! :default [k v]
   (halt-key! k v))
 
-(defmulti init-spec
-  "Return a spec for the supplied key to be used before a key is initiated."
+(defmulti pre-init-spec
+  "Return a spec for the supplied key that is used to check the associated
+  value before the key is initiated."
   identity)
 
-(defmethod init-spec :default [_] nil)
+(defmethod pre-init-spec :default [_] nil)
 
 (defn- spec-exception [system k v spec ed]
   (ex-info (str "Spec failed on key " k " when building system\n"
@@ -298,11 +299,8 @@
             :spec     spec
             :explain  ed}))
 
-(defn assert-key
-  "Assert if a value associated with a key is valid, throwing an ex-info
-  otherwise."
-  [system key value]
-  (when-let [spec (init-spec key)]
+(defn- assert-pre-init-spec [system key value]
+  (when-let [spec (pre-init-spec key)]
     (when-not (s/valid? spec value)
       (throw (spec-exception system key value spec (s/explain-data spec value))))))
 
@@ -314,7 +312,7 @@
    (init config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (build config keys init-key assert-key)))
+   (build config keys init-key assert-pre-init-spec)))
 
 (defn halt!
   "Halt a system map by applying halt-key! in reverse dependency order."

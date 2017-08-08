@@ -5,8 +5,6 @@
             [com.stuartsierra.dependency :as dep]
             [clojure.spec.alpha :as s]))
 
-(s/check-asserts true)
-
 (def log (atom []))
 
 (defmethod ig/init-key :default [k v]
@@ -20,9 +18,10 @@
 (defmethod ig/init-key ::error-init [_ _]
   (throw (ex-info "Testing" {:reason ::test})))
 
-(defmethod ig/init-key  ::k [_ v] v)
-(defmethod ig/init-key  ::n [_ v] (inc v))
-(defmethod ig/init-spec ::n [_] nat-int?)
+(defmethod ig/init-key ::k [_ v] v)
+(defmethod ig/init-key ::n [_ v] (inc v))
+
+(defmethod ig/pre-init-spec ::n [_] nat-int?)
 
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
