@@ -43,7 +43,7 @@ initialized into a system.
 
 To install, add the following to your project `:dependencies`:
 
-    [integrant "0.5.0"]
+    [integrant "0.6.0"]
 
 ## Presentations
 

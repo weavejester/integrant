@@ -1,3 +1,8 @@
+## 0.6.0 (2017-08-08)
+
+* Added `pre-init-spec` multimethod for adding specs to keys
+* Updated minimum Clojure version to 1.9
+
 ## 0.5.0 (2017-07-28)
 
 * Added composite references
