@@ -321,11 +321,11 @@ Integrant, as the same key will used in the configuration, during
 initiation, and in the resulting system. All will likely have
 different values.
 
-To resolve this, Integrant has an `pre-init-spec` multimethod that can
-extended to provide Integrant with a spec to test the value after the
-references are resolved, but before they are initiated. The resulting
-spec is checked directly before `init-key`, and an exception is raised
-if it fails.
+To resolve this, Integrant has an `pre-init-spec` multimethod that can 
+be extended to provide Integrant with a spec to test the value after
+the references are resolved, but before they are initiated. The
+resulting spec is checked directly before `init-key`, and an exception
+is raised if it fails.
 
 Here's how our two example keys would be specced out:
 
