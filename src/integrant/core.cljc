@@ -87,6 +87,19 @@
              (dep/graph)
              config))
 
+(defn- find-keys [config keys f]
+  (let [graph  (dependency-graph config)
+        keyset (set (mapcat #(map key (find-derived config %)) keys))]
+    (->> (f graph keyset)
+         (set/union keyset)
+         (sort (dep/topo-comparator graph)))))
+
+(defn- dependent-keys [config keys]
+  (find-keys config keys dep/transitive-dependencies-set))
+
+(defn- reverse-dependent-keys [config keys]
+  (reverse (find-keys config keys dep/transitive-dependents-set)))
+
 #?(:clj
    (defn read-string
     "Read a config from a string of edn. Refs may be denotied by tagging keywords
@@ -121,11 +134,13 @@
      with the name will be tried. For example, if a key is :foo.bar/baz, then the
      function will attempt to load the namespaces foo.bar and foo.bar.baz. Upon
      completion, a list of all loaded namespaces will be returned."
-     [config]
-     (doall (->> (keys config)
-                 (mapcat key->namespaces)
-                 (distinct)
-                 (keep try-require)))))
+     ([config]
+      (load-namespaces config (keys config)))
+     ([config keys]
+      (doall (->> (dependent-keys config keys)
+                  (mapcat key->namespaces)
+                  (distinct)
+                  (keep try-require))))))
 
 (defn- missing-refs-exception [config refs]
   (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
@@ -144,19 +159,6 @@
 
 (defn- expand-key [config value]
   (walk/postwalk #(if (ref? %) (resolve-ref config %) %) value))
-
-(defn- find-keys [config keys f]
-  (let [graph  (dependency-graph config)
-        keyset (set (mapcat #(map key (find-derived config %)) keys))]
-    (->> (f graph keyset)
-         (set/union keyset)
-         (sort (dep/topo-comparator graph)))))
-
-(defn- dependent-keys [config keys]
-  (find-keys config keys dep/transitive-dependencies-set))
-
-(defn- reverse-dependent-keys [config keys]
-  (reverse (find-keys config keys dep/transitive-dependents-set)))
 
 (defn- run-exception [system completed remaining f k v t]
   (ex-info (str "Error on key " k " when running system")
