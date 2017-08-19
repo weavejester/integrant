@@ -1,3 +1,7 @@
+## 0.6.1 (2017-08-19)
+
+* Added keys argument to `load-namespaces`
+
 ## 0.6.0 (2017-08-08)
 
 * Added `pre-init-spec` multimethod for adding specs to keys
