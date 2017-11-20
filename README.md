@@ -75,7 +75,7 @@ Alternatively, you can specify your configuration as pure edn:
  :handler/greet {:name "Alice"}}
 ```
 
-And load it with `read-string`:
+And load it with Integrant's version of `read-string`:
 
 ```clojure
 (def config
