@@ -222,7 +222,13 @@
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "Spec failed on key " ::n " when building system"))
-         (ig/init {::n (ig/ref ::k), ::k 1.1})))))
+         (ig/init {::n (ig/ref ::k), ::k 1.1}))))
+
+  (testing "with failing composite specs"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Spec failed on key \\[" ::n " " ::nnn "\\] when building system"))
+         (ig/init {[::n ::nnn] 1.1})))))
 
 (deftest halt-test
   (testing "without keys"

@@ -287,7 +287,7 @@
 (defmulti pre-init-spec
   "Return a spec for the supplied key that is used to check the associated
   value before the key is initiated."
-  identity)
+  normalize-key)
 
 (defmethod pre-init-spec :default [_] nil)
 
