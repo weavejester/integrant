@@ -1,3 +1,8 @@
+## 0.6.2 (2017-12-09)
+
+* Fixed dispatch of `pre-init-spec` not working with composite keys
+* Updated Clojure dependency to 1.9.0 final release
+
 ## 0.6.1 (2017-08-19)
 
 * Added keys argument to `load-namespaces`
