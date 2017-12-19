@@ -70,6 +70,8 @@
      (remove-ns lib)
      (dosync (alter @#'clojure.core/*loaded-libs* disj lib))))
 
+(derive :integrant.test-child/foo :integrant.test/foo)
+
 #?(:clj
    (deftest load-namespaces-test
      (testing "all namespaces"
@@ -108,7 +110,14 @@
                  integrant.test.bar}))
        (is (some? (find-ns 'integrant.test.foo)))
        (is (some? (find-ns 'integrant.test.bar)))
-       (is (nil?  (find-ns 'integrant.test.baz))))))
+       (is (nil?  (find-ns 'integrant.test.baz))))
+
+     (testing "load namespaces of ancestors"
+       (remove-lib 'integrant.test.foo)
+       (is (= (set (ig/load-namespaces
+                    {:integrant.test-child/foo 1}))
+              '#{integrant.test.foo}))
+       (is (some? (find-ns 'integrant.test.foo))))))
 
 (derive ::p ::pp)
 (derive ::pp ::ppp)
