@@ -138,6 +138,7 @@
       (load-namespaces config (keys config)))
      ([config keys]
       (doall (->> (dependent-keys config keys)
+                  (mapcat #(conj (ancestors %) %))
                   (mapcat key->namespaces)
                   (distinct)
                   (keep try-require))))))
