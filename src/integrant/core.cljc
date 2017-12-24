@@ -185,13 +185,16 @@
         (try-run-action system completed remaining f k)
         (recur (cons k completed) (rest remaining))))))
 
+(defn- system-origin [system]
+  (-> system meta ::origin (select-keys (keys system))))
+
 (defn run!
   "Apply a side-effectful function f to each key value pair in a system map.
   Keys are traversed in dependency order. The function should take two
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (run-loop system (dependent-keys (-> system meta ::origin) keys) f))
+  (run-loop system (dependent-keys (system-origin system) keys) f))
 
 (defn reverse-run!
   "Apply a side-effectful function f to each key value pair in a system map.
@@ -199,7 +202,7 @@
   arguments, a key and value."
   [system keys f]
   {:pre [(map? system) (some-> system meta ::origin)]}
-  (run-loop system (reverse-dependent-keys (-> system meta ::origin) keys) f))
+  (run-loop system (reverse-dependent-keys (system-origin system) keys) f))
 
 (defn- build-exception [system f k v t]
   (ex-info (str "Error on key " k " when building system")

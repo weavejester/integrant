@@ -263,6 +263,13 @@
                    [:halt ::b [[1]]]
                    [:halt ::c [1]]]))))
 
+  (testing "with partial system"
+    (reset! log [])
+    (let [m (ig/init {::a 1, ::b (ig/ref ::a)} [::a])]
+      (ig/halt! m)
+      (is (= @log [[:init ::a 1]
+                   [:halt ::a [1]]]))))
+
   (testing "with inherited keys"
     (reset! log [])
     (let [m (ig/init {::a (ig/ref ::p), ::p 1} [::a])]
