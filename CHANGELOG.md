@@ -1,3 +1,8 @@
+## 0.6.3 (2017-12-24)
+
+* Fixed `load-namespaces` to load ancestor namespaces (#35)
+* Fixed `halt!`, `run!` and `reverse-run!` to ignore keys not in system (#36)
+
 ## 0.6.2 (2017-12-09)
 
 * Fixed dispatch of `pre-init-spec` not working with composite keys
