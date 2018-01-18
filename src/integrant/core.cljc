@@ -250,6 +250,15 @@
   [config]
   (build config (keys config) (fn [_ v] v)))
 
+(defmulti prep-key
+  "Prepare the configuration associated with a key for initiation. This is
+  generally used to add in default values and references. By default the
+  method returns the value unaltered."
+  {:arglists '([key value])}
+  (fn [key value] (normalize-key key)))
+
+(defmethod prep-key :default [_ v] v)
+
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
@@ -309,6 +318,17 @@
   (when-let [spec (pre-init-spec key)]
     (when-not (s/valid? spec value)
       (throw (spec-exception system key value spec (s/explain-data spec value))))))
+
+(defn prep
+  "Prepare a config map for initiation. The prep-key method is applied to each
+  entry in the map, and the values replaced with the return value. This is used
+  for adding default values and references to the configuration."
+  ([config]
+   (prep config (keys config)))
+  ([config keys]
+   {:pre [(map? config)]}
+   (let [keyset (set keys)]
+     (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v))) {} config))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
