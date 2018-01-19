@@ -111,12 +111,22 @@
              (dep/graph)
              config))
 
+;; Version of topo-comparator that allows for determinate sorts over an ordered
+;; collection.
+(defn- topo-comparator [graph]
+  (fn [a b]
+    (cond
+      (dep/depends? graph a b) 1
+      (dep/depends? graph b a) -1
+      :else 0)))
+
 (defn- find-keys [config keys f]
   (let [graph  (dependency-graph config)
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
-         (sort (dep/topo-comparator graph)))))
+         (sort-by str)
+         (sort (topo-comparator graph)))))
 
 (defn- dependent-keys [config keys]
   (find-keys config keys dep/transitive-dependencies-set))
