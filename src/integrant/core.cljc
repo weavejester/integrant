@@ -7,24 +7,46 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]))
 
-(defrecord Ref [key])
+(defprotocol RefLike
+  (ref-key [r] "Return the key of the reference."))
+
+(defrecord Ref    [key] RefLike (ref-key [_] key))
+(defrecord RefSet [key] RefLike (ref-key [_] key))
+
+(defn valid-config-key?
+  "Returns true if the key is a keyword or a vector of keywords."
+  [key]
+  (or (keyword? key) (and (vector? key) (every? keyword? key))))
 
 (defn ref
   "Create a reference to a top-level key in a config map."
   [key]
-  {:pre [(or (keyword? key)
-             (and (vector? key) (every? keyword? key)))]}
+  {:pre [(valid-config-key? key)]}
   (->Ref key))
+
+(defn refset
+  "Create a set of references to all matching top-level keys in a config map."
+  [key]
+  {:pre [(valid-config-key? key)]}
+  (->RefSet key))
 
 (defn ref?
   "Return true if its argument is a ref."
   [x]
   (instance? Ref x))
 
-(defn- find-refs [v]
-  (cond
-    (ref? v)  (list (:key v))
-    (coll? v) (mapcat find-refs v)))
+(defn refset?
+  "Return true if its argument is a refset."
+  [x]
+  (instance? RefSet x))
+
+(defn reflike?
+  "Return true if its argument is a ref or a refset."
+  [x]
+  (satisfies? RefLike x))
+
+(defn- depth-search [pred? coll]
+  (filter pred? (tree-seq coll? seq coll)))
 
 (defonce
   ^{:doc "Return a unique keyword that is derived from an ordered collection of
@@ -77,7 +99,9 @@
     (first kvs)))
 
 (defn- find-derived-refs [config v]
-  (mapcat #(map key (find-derived config %)) (find-refs v)))
+  (->> (depth-search reflike? v)
+       (map ref-key)
+       (mapcat #(map key (find-derived config %)))))
 
 (defn dependency-graph
   "Return a dependency graph of all the refs in a config. Resolve derived
@@ -101,13 +125,16 @@
   (reverse (find-keys config keys dep/transitive-dependents-set)))
 
 #?(:clj
+   (def ^:private default-readers {'ig/ref ref, 'ig/refset refset}))
+
+#?(:clj
    (defn read-string
     "Read a config from a string of edn. Refs may be denotied by tagging keywords
      with #ig/ref."
      ([s]
       (read-string {:eof nil} s))
      ([opts s]
-      (let [readers (merge {'ig/ref ref} (:readers opts {}))]
+      (let [readers (merge default-readers (:readers opts {}))]
         (edn/read-string (assoc opts :readers readers) s)))))
 
 #?(:clj
@@ -150,16 +177,28 @@
             :missing-refs refs}))
 
 (defn- ambiguous-refs [config]
-  (filter #(next (find-derived config %)) (find-refs config)))
+  (->> (depth-search ref? config)
+       (map ref-key)
+       (filter #(next (find-derived config %)))))
 
 (defn- missing-refs [config]
-  (remove #(find-derived config %) (find-refs config)))
+  (->> (depth-search ref? config)
+       (map ref-key)
+       (remove #(find-derived config %))))
 
 (defn- resolve-ref [config ref]
-  (val (first (find-derived config (:key ref)))))
+  (val (first (find-derived config (ref-key ref)))))
+
+(defn- resolve-refset [config refset]
+  (set (map val (find-derived config (ref-key refset)))))
 
 (defn- expand-key [config value]
-  (walk/postwalk #(if (ref? %) (resolve-ref config %) %) value))
+  (walk/postwalk
+   #(cond
+      (ref? %)    (resolve-ref config %)
+      (refset? %) (resolve-refset config %)
+      :else       %)
+   value))
 
 (defn- run-exception [system completed remaining f k v t]
   (ex-info (str "Error on key " k " when running system")

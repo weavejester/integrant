@@ -43,9 +43,23 @@
 (defmethod ig/suspend-key! :default [k v]
   (swap! log conj [:suspend k v]))
 
+(derive ::p ::pp)
+(derive ::pp ::ppp)
+
+(derive ::ap ::a)
+(derive ::ap ::p)
+
 (deftest ref-test
   (is (ig/ref? (ig/ref ::foo)))
-  (is (ig/ref? (ig/ref [::foo ::bar]))))
+  (is (ig/ref? (ig/ref [::foo ::bar])))
+  (is (ig/reflike? (ig/ref ::foo)))
+  (is (ig/reflike? (ig/ref [::foo ::bar]))))
+
+(deftest refset-test
+  (is (ig/refset? (ig/refset ::foo)))
+  (is (ig/refset? (ig/refset [::foo ::bar])))
+  (is (ig/reflike? (ig/refset ::foo)))
+  (is (ig/reflike? (ig/refset [::foo ::bar]))))
 
 (deftest composite-keyword-test
   (let [k (ig/composite-keyword [::a ::b])]
@@ -58,12 +72,20 @@
   (is (= (ig/expand {::a (ig/ref ::b), ::b 1})
          {::a 1, ::b 1}))
   (is (= (ig/expand {::a (ig/ref ::b), ::b (ig/ref ::c), ::c 2})
-         {::a 2, ::b 2, ::c 2})))
+         {::a 2, ::b 2, ::c 2}))
+  (is (= (ig/expand {::a (ig/ref ::pp), ::p 1})
+         {::a 1, ::p 1}))
+  (is (= (ig/expand {::a (ig/refset ::ppp), ::p 1, ::pp 2})
+         {::a #{1 2}, ::p 1, ::pp 2}))
+  (is (= (ig/expand {::a (ig/refset ::ppp)})
+         {::a #{}})))
 
 #?(:clj
    (deftest read-string-test
      (is (= (ig/read-string "{:foo/a #ig/ref :foo/b, :foo/b 1}")
             {:foo/a (ig/ref :foo/b), :foo/b 1}))
+     (is (= (ig/read-string "{:foo/a #ig/refset :foo/b, :foo/b 1}")
+            {:foo/a (ig/refset :foo/b), :foo/b 1}))
      (is (= (ig/read-string {:readers {'test/var find-var}}
                             "{:foo/a #test/var clojure.core/+}")
             {:foo/a #'+}))))
@@ -122,14 +144,9 @@
               '#{integrant.test.foo}))
        (is (some? (find-ns 'integrant.test.foo))))))
 
-(derive ::p ::pp)
-(derive ::pp ::ppp)
 
 (deftest dependency-graph-test
   (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
-
-(derive ::ap ::a)
-(derive ::ap ::p)
 
 (deftest derived-from?-test
   (are [a b] (ig/derived-from? a b)
@@ -228,6 +245,14 @@
               (= @log [[:init [::b ::d] 2]
                        [:init [::b ::c ::e] 1]
                        [:init ::a [1]]])))))
+
+  (testing "with refsets"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/refset ::ppp), ::p 1, ::pp 2})]
+      (is (= m {::a [#{[1] [2]}], ::p [1], ::pp [2]}))
+      (is (= @log [[:init ::p 1]
+                   [:init ::pp 2]
+                   [:init ::a #{[1] [2]}]]))))
 
   (testing "large config"
     (is (= (ig/init {:a/a1 {} :a/a2 {:_ (ig/ref :a/a1)}
