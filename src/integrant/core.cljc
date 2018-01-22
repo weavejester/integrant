@@ -111,7 +111,11 @@
              (dep/graph)
              config))
 
-(defn- key-comparator [graph]
+(defn key-comparator
+  "Create a key comparator from the dependency graph of a configuration map.
+  The comparator is deterministic; it will always result in the same key
+  order."
+  [graph]
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]

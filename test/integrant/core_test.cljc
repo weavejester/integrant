@@ -148,6 +148,11 @@
 (deftest dependency-graph-test
   (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
 
+(deftest key-comparator-test
+  (let [graph (ig/dependency-graph {::a (ig/ref ::ppp) ::p 1, ::b 2})]
+    (is (= (sort (ig/key-comparator graph) [::b ::a ::p])
+           [::p ::a ::b]))))
+
 (deftest derived-from?-test
   (are [a b] (ig/derived-from? a b)
     ::p           ::p
