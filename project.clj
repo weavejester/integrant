@@ -4,7 +4,7 @@
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [com.stuartsierra/dependency "0.2.0"]]
+                 [weavejester/dependency "0.2.1"]]
   :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.946"]]}}
   :plugins [[lein-doo "0.1.7"]]
   :cljsbuild

@@ -1,11 +1,11 @@
 (ns integrant.core
   (:refer-clojure :exclude [ref read-string run!])
-  (:require [com.stuartsierra.dependency :as dep]
-    #?(:clj [clojure.edn :as edn])
+  (:require #?(:clj [clojure.edn :as edn])
             [clojure.walk :as walk]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [weavejester.dependency :as dep]))
 
 (defprotocol RefLike
   (ref-key [r] "Return the key of the reference."))
@@ -111,22 +111,15 @@
              (dep/graph)
              config))
 
-;; Version of topo-comparator that allows for determinate sorts over an ordered
-;; collection.
-(defn- topo-comparator [graph]
-  (fn [a b]
-    (cond
-      (dep/depends? graph a b) 1
-      (dep/depends? graph b a) -1
-      :else 0)))
+(defn- key-comparator [graph]
+  (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]
   (let [graph  (dependency-graph config)
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
-         (sort-by str)
-         (sort (topo-comparator graph)))))
+         (sort (key-comparator graph)))))
 
 (defn- dependent-keys [config keys]
   (find-keys config keys dep/transitive-dependencies-set))
@@ -402,7 +395,7 @@
 
 (defn- halt-missing-keys! [system keys]
   (let [graph (-> system meta ::origin dependency-graph)]
-    (doseq [k (sort (dep/topo-comparator graph) (missing-keys system keys))]
+    (doseq [k (sort (key-comparator graph) (missing-keys system keys))]
       (halt-key! k (system k)))))
 
 (defn resume

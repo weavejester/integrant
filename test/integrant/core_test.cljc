@@ -1,9 +1,9 @@
 (ns integrant.core-test
-  (:require [integrant.core :as ig]
+  (:require [clojure.spec.alpha :as s]
    #?(:clj  [clojure.test :refer :all]
       :cljs [cljs.test :refer-macros [are deftest is testing]])
-            [com.stuartsierra.dependency :as dep]
-            [clojure.spec.alpha :as s]))
+            [integrant.core :as ig]
+            [weavejester.dependency :as dep]))
 
 (def log (atom []))
 
