@@ -1,3 +1,11 @@
+## 0.7.0-alpha1 (2018-01-24)
+
+* Added `refset` function and tags
+* Added `prep` function and associated `prep-key` method
+* Added `key-comparator` function
+* Added `fold` function for reducing system
+* Fixed dependency ordering to be fully deterministic
+
 ## 0.6.3 (2017-12-24)
 
 * Fixed `load-namespaces` to load ancestor namespaces (#35)
