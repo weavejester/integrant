@@ -250,6 +250,16 @@
   {:pre [(map? system) (some-> system meta ::origin)]}
   (run-loop system (reverse-dependent-keys (system-origin system) keys) f))
 
+(defn fold
+  "Reduce all the key value pairs in system map in dependency order, starting
+  from an initial value. The function should take three arguments: the
+  accumulator, the current key and the current value."
+  [system f val]
+  (let [graph (dependency-graph (system-origin system))]
+    (->> (keys system)
+         (sort (key-comparator graph))
+         (reduce #(f %1 %2 (system %2)) val))))
+
 (defn- build-exception [system f k v t]
   (ex-info (str "Error on key " k " when building system")
            {:reason   ::build-threw-exception

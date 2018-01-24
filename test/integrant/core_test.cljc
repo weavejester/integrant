@@ -440,6 +440,12 @@
              [:test :b [:build :b 1]]]]
            (test-log ig/reverse-run! system)))))
 
+(deftest fold-test
+  (let [config {::a (ig/ref ::ppp), ::b (ig/ref ::pp), ::p 1, ::c 2}
+        system (ig/init config)]
+    (is (= (ig/fold system #(conj %1 [%2 %3]) [])
+           [[::p [1]] [::a [[1]]] [::b [[1]]] [::c [2]]]))))
+
 (deftest wrapped-exception-test
   (testing "exception when building"
     (let [ex (try (ig/init {::a 1, ::error-init (ig/ref ::a)}) nil
