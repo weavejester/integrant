@@ -251,6 +251,13 @@
                        [:init [::b ::c ::e] 1]
                        [:init ::a [1]]])))))
 
+  (testing "with failing composite refs"
+    (reset! log [])
+    (is (thrown-with-msg?
+          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+          #"^Invalid composite key: \[:integrant.core-test/a :b\]. Every keyword must be namespaced.$"
+          (ig/init {[::a :b] :anything}))))
+
   (testing "with refsets"
     (reset! log [])
     (let [m (ig/init {::a (ig/refset ::ppp), ::p 1, ::pp 2})]
@@ -469,7 +476,7 @@
                            ::error-halt (ig/ref ::a)
                            ::b (ig/ref ::error-halt)
                            ::c (ig/ref ::b)})
-          ex     (try (ig/halt! system) 
+          ex     (try (ig/halt! system)
                       (catch #?(:clj Throwable :cljs :default) t t))]
       (is (some? ex))
       (is (= (#?(:clj .getMessage :cljs ex-message) ex)
