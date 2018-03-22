@@ -98,18 +98,25 @@
       (throw (ambiguous-key-exception m k (map key kvs))))
     (first kvs)))
 
-(defn- find-derived-refs [config v]
-  (->> (depth-search reflike? v)
+(defn- find-derived-refs [config v include-refsets?]
+  (->> (depth-search (if include-refsets? reflike? ref?) v)
        (map ref-key)
        (mapcat #(map key (find-derived config %)))))
 
 (defn dependency-graph
-  "Return a dependency graph of all the refs in a config. Resolve derived
-  dependencies."
-  [config]
-  (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-derived-refs config v)))
-             (dep/graph)
-             config))
+  "Return a dependency graph of all the refs and refsets in a config. Resolves
+  derived dependencies. Takes the following options:
+
+  `:include-refsets?`
+  : whether to include refsets in the dependency graph (defauls to true)"
+  ([config]
+   (dependency-graph config {}))
+  ([config {:keys [include-refsets?] :or {include-refsets? true}}]
+   (letfn [(find-refs [v]
+             (find-derived-refs config v include-refsets?))]
+     (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
+                (dep/graph)
+                config))))
 
 (defn key-comparator
   "Create a key comparator from the dependency graph of a configuration map.
@@ -119,11 +126,11 @@
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]
-  (let [graph  (dependency-graph config)
+  (let [graph  (dependency-graph config {:include-refsets? false})
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
-         (sort (key-comparator graph)))))
+         (sort (key-comparator (dependency-graph config))))))
 
 (defn- dependent-keys [config keys]
   (find-keys config keys dep/transitive-dependencies-set))

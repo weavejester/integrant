@@ -146,7 +146,18 @@
 
 
 (deftest dependency-graph-test
-  (is (dep/depends? (ig/dependency-graph {::a (ig/ref ::ppp) ::p "b"}) ::a ::p)))
+  (let [m {::a (ig/ref ::p), ::b (ig/refset ::ppp) ::p 1, ::pp 2}]
+    (testing "graph with refsets"
+      (let [g (ig/dependency-graph m)]
+        (is (dep/depends? g ::a ::p))
+        (is (dep/depends? g ::b ::p))
+        (is (dep/depends? g ::b ::pp))))
+
+    (testing "graph without refsets"
+      (let [g (ig/dependency-graph m {:include-refsets? false})]
+        (is (dep/depends? g ::a ::p))
+        (is (not (dep/depends? g ::b ::p)))
+        (is (not (dep/depends? g ::b ::pp)))))))
 
 (deftest key-comparator-test
   (let [graph (ig/dependency-graph {::a (ig/ref ::ppp) ::p 1, ::b 2})]
@@ -258,6 +269,13 @@
       (is (= @log [[:init ::p 1]
                    [:init ::pp 2]
                    [:init ::a #{[1] [2]}]]))))
+
+  (testing "with refsets and keys"
+    (reset! log [])
+    (let [m {::a (ig/refset ::ppp), ::p 1, ::pp 2}]
+      (is (= (ig/init m [::a])      {::a [#{}]}))
+      (is (= (ig/init m [::a ::p])  {::a [#{[1]}] ::p [1]}))
+      (is (= (ig/init m [::a ::pp]) {::a [#{[1] [2]}] ::p [1] ::pp [2]}))))
 
   (testing "large config"
     (is (= (ig/init {:a/a1 {} :a/a2 {:_ (ig/ref :a/a1)}
