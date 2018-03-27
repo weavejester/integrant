@@ -414,9 +414,10 @@
 (defn- missing-keys [system ks]
   (remove (set ks) (keys system)))
 
-(defn- halt-missing-keys! [system keys]
-  (let [graph (-> system meta ::origin dependency-graph)]
-    (doseq [k (sort (key-comparator graph) (missing-keys system keys))]
+(defn- halt-missing-keys! [config system keys]
+  (let [graph        (-> system meta ::origin dependency-graph)
+        missing-keys (missing-keys system (dependent-keys config keys))]
+    (doseq [k (sort (key-comparator graph) missing-keys)]
       (halt-key! k (system k)))))
 
 (defn resume
@@ -428,7 +429,7 @@
    (resume config system (keys config)))
   ([config system keys]
    {:pre [(map? config) (map? system) (some-> system meta ::origin)]}
-   (halt-missing-keys! system keys)
+   (halt-missing-keys! config system keys)
    (build config keys (fn [k v]
                         (if (contains? system k)
                           (resume-key k v (-> system meta ::build (get k)) (system k))
