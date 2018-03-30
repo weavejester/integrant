@@ -403,7 +403,21 @@
                    [:suspend ::a [:x]]
                    [:suspend [::b ::x] :x]
                    [:resume [::b ::x] 1 1 :x]
-                   [:resume ::a :rx :x [:x]]])))))
+                   [:resume ::a :rx :x [:x]]]))))
+
+  (testing "resume key with dependencies"
+    (reset! log [])
+    (let [c  {::a {:b (ig/ref ::b)}, ::b 1}
+          m  (ig/init c [::a])
+          _  (ig/suspend! m)
+          m' (ig/resume c m [::a])]
+      (is (= @log
+             [[:init ::b 1]
+              [:init ::a {:b [1]}]
+              [:suspend ::a [{:b [1]}]]
+              [:suspend ::b [1]]
+              [:resume ::b 1 1 [1]]
+              [:resume ::a {:b [1]} {:b [1]} [{:b [1]}]]])))))
 
 (deftest invalid-configs-test
   (testing "ambiguous refs"
