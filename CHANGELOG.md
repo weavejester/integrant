@@ -1,3 +1,8 @@
+## 0.7.0-alpha2 (2018-04-09)
+
+* Stopped refsets from automatically including dependent keys
+* Fixed halting of dependency keys in `resume`
+
 ## 0.7.0-alpha1 (2018-01-24)
 
 * Added `refset` function and tags

@@ -48,7 +48,7 @@ To use the latest stable release, add the following to your project
 
 Or to use the latest alpha release:
 
-    [integrant "0.7.0-alpha1"]
+    [integrant "0.7.0-alpha2"]
 
 ## Presentations
 
