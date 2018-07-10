@@ -1,4 +1,5 @@
 (ns integrant.core
+  "Core functions for managing a system with Integrant."
   (:refer-clojure :exclude [ref read-string run!])
   (:require [com.stuartsierra.dependency :as dep]
     #?(:clj [clojure.edn :as edn])
@@ -51,7 +52,7 @@
             :matching-keys matching-keys}))
 
 (defn derived-from?
-  "Return true if a key is derived from candidate keyword or vector of
+  "Return `true` if a key is derived from candidate keyword or vector of
   keywords."
   [key candidate]
   (let [key (normalize-key key)]
@@ -61,14 +62,14 @@
 
 (defn find-derived
   "Return a seq of all entries in a map, m, where the key is derived from the
-  a candidate key, k. If there are no matching keys, nil is returned. The
+  a candidate key, k. If there are no matching keys, `nil` is returned. The
   candidate key may be a keyword, or vector of keywords."
   [m k]
   (seq (filter #(or (= (key %) k) (derived-from? (key %) k)) m)))
 
 (defn find-derived-1
   "Return the map entry in a map, m, where the key is derived from the keyword,
-  k. If there are no matching keys, nil is returned. If there is more than one
+  k. If there are no matching keys, `nil` is returned. If there is more than one
   matching key, an ambiguous key exception is raised."
   [m k]
   (let [kvs (find-derived m k)]
@@ -103,7 +104,7 @@
 #?(:clj
    (defn read-string
     "Read a config from a string of edn. Refs may be denotied by tagging keywords
-     with #ig/ref."
+     with `#ig/ref`."
      ([s]
       (read-string {:eof nil} s))
      ([opts s]
@@ -131,8 +132,8 @@
    (defn load-namespaces
      "Attempt to load the namespaces referenced by the keys in a configuration.
      If a key is namespaced, both the namespace and the namespace concatenated
-     with the name will be tried. For example, if a key is :foo.bar/baz, then the
-     function will attempt to load the namespaces foo.bar and foo.bar.baz. Upon
+     with the name will be tried. For example, if a key is `:foo.bar/baz`, then the
+     function will attempt to load the namespaces `foo.bar` and `foo.bar.baz`. Upon
      completion, a list of all loaded namespaces will be returned."
      ([config]
       (load-namespaces config (keys config)))
@@ -269,7 +270,7 @@
 (defmulti resume-key
   "Turn a config value associated with a key into a concrete implementation,
   but reuse resources (e.g. connections, running threads, etc) from an existing
-  implementation. By default this multimethod calls init-key and ignores the
+  implementation. By default this multimethod calls [[init-key]] and ignores the
   additional argument."
   {:arglists '([key value old-value old-impl])}
   (fn [key value old-value old-impl] (normalize-key key)))
@@ -279,7 +280,7 @@
 
 (defmulti suspend-key!
   "Suspend a running implementation associated with a key, so that it may be
-  eventually passed to resume-key. By default this multimethod calls halt-key!,
+  eventually passed to [[resume-key]]. By default this multimethod calls [[halt-key!]],
   but it may be customized to do things like keep a server running, but buffer
   incoming requests until the server is resumed."
   {:arglists '([key value])}
@@ -312,7 +313,7 @@
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
-  order, initiated via the init-key multimethod, then the refs associated with
+  order, initiated via the [[init-key]] multimethod, then the refs associated with
   the key are expanded."
   ([config]
    (init config (keys config)))
@@ -321,7 +322,7 @@
    (build config keys init-key assert-pre-init-spec)))
 
 (defn halt!
-  "Halt a system map by applying halt-key! in reverse dependency order."
+  "Halt a system map by applying [[halt-key!]] in reverse dependency order."
   ([system]
    (halt! system (keys system)))
   ([system keys]
@@ -339,7 +340,7 @@
 (defn resume
   "Turn a config map into a system map, reusing resources from an existing
   system when it's possible to do so. Keys are traversed in dependency order,
-  resumed with the resume-key multimethod, then the refs associated with the
+  resumed with the [[resume-key]] multimethod, then the refs associated with the
   key are expanded."
   ([config system]
    (resume config system (keys config)))
@@ -352,7 +353,7 @@
                           (init-key k v))))))
 
 (defn suspend!
-  "Suspend a system map by applying suspend-key! in reverse dependency order."
+  "Suspend a system map by applying [[suspend-key!]] in reverse dependency order."
   ([system]
    (suspend! system (keys system)))
   ([system keys]
