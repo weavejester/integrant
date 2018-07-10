@@ -383,6 +383,9 @@ This will attempt to load the namespace `foo.component` and also
 `foo.component.bar`. A list of all successfully loaded namespaces will
 be returned from the function. Missing namespaces are ignored.
 
+## Further Documentation
+
+* [API docs](https://weavejester.github.io/integrant/integrant.core.html)
 
 ## License
 
