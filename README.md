@@ -389,6 +389,6 @@ be returned from the function. Missing namespaces are ignored.
 
 ## License
 
-Copyright © 2017 James Reeves
+Copyright © 2018 James Reeves
 
 Released under the MIT license.
