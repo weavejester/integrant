@@ -13,10 +13,13 @@
 (defrecord Ref    [key] RefLike (ref-key [_] key))
 (defrecord RefSet [key] RefLike (ref-key [_] key))
 
+(defn- composite-key? [keys]
+  (and (vector? keys) (every? qualified-keyword? keys)))
+
 (defn valid-config-key?
-  "Returns true if the key is a keyword or a vector of keywords."
+  "Returns true if the key is a keyword or valid composite key."
   [key]
-  (or (keyword? key) (and (vector? key) (every? keyword? key))))
+  (or (keyword? key) (composite-key? key)))
 
 (defn ref
   "Create a reference to a top-level key in a config map."
@@ -200,6 +203,15 @@
        (map ref-key)
        (remove #(find-derived config %))))
 
+(defn- invalid-composite-keys [config]
+  (->> (keys config) (filter vector?) (remove composite-key?)))
+
+(defn- invalid-composite-key-exception [config key]
+  (ex-info (str "Invalid composite key: " key ". Every keyword must be namespaced.")
+           {:reason ::invalid-composite-key
+            :config config
+            :key key}))
+
 (defn- resolve-ref [config ref]
   (val (first (find-derived config (ref-key ref)))))
 
@@ -300,6 +312,8 @@
    {:pre [(map? config)]}
    (let [relevant-keys   (dependent-keys config keys)
          relevant-config (select-keys config relevant-keys)]
+     (when-let [invalid-key (first (invalid-composite-keys config))]
+       (throw (invalid-composite-key-exception config invalid-key)))
      (when-let [ref (first (ambiguous-refs relevant-config))]
        (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
      (when-let [refs (seq (missing-refs relevant-config))]
