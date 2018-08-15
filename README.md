@@ -334,7 +334,7 @@ is raised if it fails.
 
 Here's how our two example keys would be specced out:
 
-```clojre
+```clojure
 (require '[clojure.spec.alpha :as s])
 
 (s/def ::port pos-int?)
