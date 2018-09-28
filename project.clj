@@ -6,7 +6,11 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [weavejester/dependency "0.2.1"]]
   :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.946"]]}}
-  :plugins [[lein-doo "0.1.7"]]
+  :plugins [[lein-codox "0.10.4"]
+            [lein-doo "0.1.7"]]
+  :codox
+  {:output-path "codox"
+   :source-uri "http://github.com/weavejester/integrant/blob/{version}/{filepath}#L{line}"}
   :cljsbuild
   {:builds [{:id "test-phantom"
              :source-paths ["src" "test"]
