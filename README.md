@@ -61,7 +61,7 @@ Or to use the latest alpha release:
 Integrant starts with a configuration map. Each top-level key in the
 map represents a configuration that can be "initialized" into a
 concrete implementation. Configurations can reference other keys via
-the `ref` function.
+the `ref` (or `refset`) function.
 
 For example:
 
@@ -239,6 +239,33 @@ Like `init` and `halt!`, `resume` and `suspend!` can be supplied with
 a collection of keys to narrow down the parts of the configuration
 that are suspended or resumed.
 
+### Prepping
+
+Sometimes keys require some preparation. Perhaps you have a
+particularly complex set of default values, or perhaps you want to add
+in default references to other keys. In these cases, the `prep-key`
+method can help.
+
+```clojure
+(defmethod ig/prep-key :adapter/jetty [_ config]
+  (merge {:port 8080} config))
+```
+
+The `prep-key` method will change the value of a key *before* the
+configuration is initialized. In the previous example, the `:port`
+would default to `8080` if not set.
+
+All keys in a configuration can be prepped using the `prep` function
+before the `init` function:
+
+```clojure
+(-> config ig/prep ig/init)
+```
+
+If `prep-key` is not defined, it defaults to the identity
+function. Prepping keys is particularly useful when adding default
+references to derived keywords.
+
 ### Derived keywords
 
 Keywords have an inherited hierarchy. Integrant takes advantage of
@@ -260,7 +287,6 @@ We can now use `:adapter/ring` in place of `:adapter/jetty`:
 
 We can also use it as a reference, but only if the reference is
 unambiguous, and only refers to one key in the configuration.
-
 
 ### Composite keys
 
@@ -299,7 +325,6 @@ So your could also write:
 This syntax sugar allows you to avoid adding extra `derive`
 instructions to your source code.
 
-
 ### Composite references
 
 Composite references complement composite keys. A normal reference
@@ -318,6 +343,57 @@ For example:
 One use of composite references is to provide a way of grouping keys
 in a configuration.
 
+### Refs vs refsets
+
+An Integrant ref is used to reference another key in the
+configuration. The ref will be replaced with the initialized value of
+the key. The ref does not need to refer to an exact key - the parent of
+a derived key may be specified, so long as the ref is unambiguous.
+
+For example suppose we have a configuration:
+
+```edn
+{:handler/greet    {:name #ig/ref :const/name}
+ :const.name/alice {:name "Alice"}
+ :const.name/bob   {:name "Bob"}}
+```
+
+And some definitions:
+
+```clojure
+(defmethod ig/init-key :const/name [_ {:keys [name]}]
+  name)
+
+(derive :const.name/alice :const/name)
+(derive :const.name/bob   :const/name)
+```
+
+In this case `#ig/ref :const/name` is ambiguous - it could refer to
+either `:const.name/alice` or `:const.name/bob`. To fix this we could
+make the reference more specific:
+
+```edn
+{:handler/greet    {:name #ig/ref :const.name/alice}
+ :const.name/alice {:name "Alice"}
+ :const.name/bob   {:name "Bob"}}
+```
+
+But suppose we want to greet not just one person, but several. In this
+case we can use a refset:
+
+```edn
+{:handler/greet-all {:names #ig/refset :const/name}
+ :const.name/alice  {:name "Alice"}
+ :const.name/bob    {:name "Bob"}}
+```
+
+When initialized, a refset will produce a set of all matching
+values.
+
+```clojure
+(defmethod ig/init-key :handler/greet-all [_ {:keys [names]}]
+  (fn [_] (resp/response (str "Hello " (clojure.string/join ", " names))))
+```
 
 ### Specs
 
@@ -361,7 +437,6 @@ Then an `ExceptionInfo` is thrown explaining the error:
 ExceptionInfo Spec failed on key :adapter/jetty when building system
 val: {:port 3000} fails predicate: (contains? % :handler)
 ```
-
 
 ### Loading namespaces
 
