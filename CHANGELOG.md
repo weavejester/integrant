@@ -1,3 +1,7 @@
+## 0.7.0 (2018-09-28)
+
+* Added check for invalid composite keys (#39)
+
 ## 0.7.0-alpha2 (2018-04-09)
 
 * Stopped refsets from automatically including dependent keys

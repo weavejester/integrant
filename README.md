@@ -41,14 +41,10 @@ initialized into a system.
 
 ## Installation
 
-To use the latest stable release, add the following to your project
+To use the latest release, add the following to your project
 `:dependencies`:
 
-    [integrant "0.6.3"]
-
-Or to use the latest alpha release:
-
-    [integrant "0.7.0-alpha2"]
+    [integrant "0.7.0"]
 
 ## Presentations
 
