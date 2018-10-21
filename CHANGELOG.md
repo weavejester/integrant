@@ -1,3 +1,7 @@
+## 0.8.0-alpha1 (2018-10-21)
+
+* Added `resolve-ref` multimethod
+
 ## 0.7.0 (2018-09-28)
 
 * Added check for invalid composite keys (#39)
