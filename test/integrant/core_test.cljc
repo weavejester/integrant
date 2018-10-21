@@ -22,9 +22,12 @@
   (throw (ex-info "Testing" {:reason ::test})))
 
 (defmethod ig/init-key ::k [_ v] v)
-(defmethod ig/init-key ::n [_ v] (inc v))
 
+(defmethod ig/init-key ::n [_ v] (inc v))
 (defmethod ig/pre-init-spec ::n [_] nat-int?)
+
+(defmethod ig/init-key ::r [_ v] {:v v})
+(defmethod ig/resolve-key ::r [_ {:keys [v]}] v)
 
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
@@ -268,6 +271,10 @@
           #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
           #"^Invalid composite key: \[:integrant.core-test/a :b\]. Every keyword must be namespaced.$"
           (ig/init {[::a :b] :anything}))))
+
+  (testing "with custom resolve-key"
+    (let [m (ig/init {::a (ig/ref ::r), ::r 1})]
+      (is (= m {::a [1], ::r {:v 1}}))))
 
   (testing "with refsets"
     (reset! log [])

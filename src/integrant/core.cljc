@@ -212,17 +212,19 @@
             :config config
             :key key}))
 
-(defn- resolve-ref [config ref]
-  (val (first (find-derived config (ref-key ref)))))
+(defn- resolve-ref [config resolvef ref]
+  (let [[k v] (first (find-derived config (ref-key ref)))]
+    (resolvef k v)))
 
-(defn- resolve-refset [config refset]
-  (set (map val (find-derived config (ref-key refset)))))
+(defn- resolve-refset [config resolvef refset]
+  (set (for [[k v] (find-derived config (ref-key refset))]
+         (resolvef k v))))
 
-(defn- expand-key [config value]
+(defn- expand-key [config resolvef value]
   (walk/postwalk
    #(cond
-      (ref? %)    (resolve-ref config %)
-      (refset? %) (resolve-refset config %)
+      (ref? %)    (resolve-ref config resolvef %)
+      (refset? %) (resolve-refset config resolvef %)
       :else       %)
    value))
 
@@ -293,8 +295,8 @@
        (catch #?(:clj Throwable :cljs :default) t
          (throw (build-exception system f k v t)))))
 
-(defn- build-key [f assertf system [k v]]
-  (let [v' (expand-key system v)]
+(defn- build-key [f assertf resolvef system [k v]]
+  (let [v' (expand-key system resolvef v)]
     (assertf system k v')
     (-> system
         (assoc k (try-build-action system f k v'))
@@ -309,6 +311,8 @@
   ([config keys f]
    (build config keys f (fn [_ _ _])))
   ([config keys f assertf]
+   (build config keys f assertf (fn [_ v] v)))
+  ([config keys f assertf resolvef]
    {:pre [(map? config)]}
    (let [relevant-keys   (dependent-keys config keys)
          relevant-config (select-keys config relevant-keys)]
@@ -318,14 +322,23 @@
        (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
      (when-let [refs (seq (missing-refs relevant-config))]
        (throw (missing-refs-exception config refs)))
-     (reduce (partial build-key f assertf)
+     (reduce (partial build-key f assertf resolvef)
              (with-meta {} {::origin config})
              (map (fn [k] [k (config k)]) relevant-keys)))))
+
+(defmulti resolve-key
+  "Return a value to substitute for a reference prior to initiation. By default
+  the value of the key is returned unaltered. This can be used to hide
+  information that is only necessary to halt or suspend the key."
+  {:arglists '([key value])}
+  (fn [key value] (normalize-key key)))
+
+(defmethod resolve-key :default [_ v] v)
 
 (defn expand
   "Replace all refs with the values they correspond to."
   [config]
-  (build config (keys config) (fn [_ v] v)))
+  (build config (keys config) (fn [_ v] v) (fn [_ _ _]) resolve-key))
 
 (defmulti prep-key
   "Prepare the configuration associated with a key for initiation. This is
@@ -415,7 +428,7 @@
    (init config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (build config keys init-key assert-pre-init-spec)))
+   (build config keys init-key assert-pre-init-spec resolve-key)))
 
 (defn halt!
   "Halt a system map by applying halt-key! in reverse dependency order."
