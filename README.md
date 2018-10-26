@@ -454,6 +454,12 @@ This will attempt to load the namespace `foo.component` and also
 `foo.component.bar`. A list of all successfully loaded namespaces will
 be returned from the function. Missing namespaces are ignored.
 
+## Reloaded workflow
+
+See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to 
+use Integrant systems at the repl, in line with Stuart Sierra's [reloaded 
+workflow](http://thinkrelevance.com/blog/2013/06/04/clojure-workflow-reloaded).
+
 ## Further Documentation
 
 * [API docs](https://weavejester.github.io/integrant/integrant.core.html)
