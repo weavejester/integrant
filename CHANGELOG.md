@@ -1,3 +1,7 @@
+## 0.8.0-alpha2 (2018-10-26)
+
+* Fixed `resolve-ref` not working under `resume`
+
 ## 0.8.0-alpha1 (2018-10-21)
 
 * Added `resolve-ref` multimethod
