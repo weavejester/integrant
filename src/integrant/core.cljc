@@ -457,10 +457,13 @@
   ([config system keys]
    {:pre [(map? config) (map? system) (some-> system meta ::origin)]}
    (halt-missing-keys! config system keys)
-   (build config keys (fn [k v]
-                        (if (contains? system k)
-                          (resume-key k v (-> system meta ::build (get k)) (system k))
-                          (init-key k v))))))
+   (build config keys
+          (fn [k v]
+            (if (contains? system k)
+              (resume-key k v (-> system meta ::build (get k)) (system k))
+              (init-key k v)))
+          assert-pre-init-spec
+          resolve-key)))
 
 (defn suspend!
   "Suspend a system map by applying suspend-key! in reverse dependency order."

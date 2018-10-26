@@ -28,6 +28,7 @@
 
 (defmethod ig/init-key ::r [_ v] {:v v})
 (defmethod ig/resolve-key ::r [_ {:keys [v]}] v)
+(defmethod ig/resume-key ::r [k v _ _] (ig/init-key k v))
 
 (defmethod ig/halt-key! :default [k v]
   (swap! log conj [:halt k v]))
@@ -405,6 +406,13 @@
                    [:suspend ::b [1]]
                    [:halt ::b [1]]
                    [:resume ::a [] {:b [1]} [{:b [1]}]]]))))
+
+  (testing "with custom resolve-key"
+    (let [c  {::a (ig/ref ::r), ::r 1}
+          m  (ig/init c)
+          _  (ig/suspend! m)
+          m' (ig/resume c m)]
+      (is (= m m'))))
 
   (testing "composite keys"
     (reset! log [])
