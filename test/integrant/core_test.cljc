@@ -72,6 +72,10 @@
     (is (identical? k (ig/composite-keyword [::a ::b])))
     (is (not= k (ig/composite-keyword [::a ::c])))))
 
+(deftest valid-config-key-test
+  (is (ig/valid-config-key? ::a))
+  (is (not (ig/valid-config-key? :a))))
+
 (deftest expand-test
   (is (= (ig/expand {::a (ig/ref ::b), ::b 1})
          {::a 1, ::b 1}))
@@ -470,12 +474,12 @@
      @log]))
 
 (deftest build-test
-  (is (= [{:a [:build :a [:build :b 1]]
-           :b [:build :b 1]}
-          [[:build :b 1]
-           [:build :a [:build :b 1]]]]
-         (build-log {:a (ig/ref :b)
-                     :b 1}))))
+  (is (= [{::a [:build ::a [:build ::b 1]]
+           ::b [:build ::b 1]}
+          [[:build ::b 1]
+           [:build ::a [:build ::b 1]]]]
+         (build-log {::a (ig/ref ::b)
+                     ::b 1}))))
 
 (defn test-log [f m]
   (let [log (atom [])]
@@ -483,15 +487,15 @@
      @log]))
 
 (deftest run-test
-  (let [config {:a (ig/ref :b), :b 1}
+  (let [config {::a (ig/ref ::b), ::b 1}
         [system _] (build-log config)]
     (is (= [nil
-            [[:test :b [:build :b 1]]
-             [:test :a [:build :a [:build :b 1]]]]]
+            [[:test ::b [:build ::b 1]]
+             [:test ::a [:build ::a [:build ::b 1]]]]]
            (test-log ig/run! system)))
     (is (= [nil
-            [[:test :a [:build :a [:build :b 1]]]
-             [:test :b [:build :b 1]]]]
+            [[:test ::a [:build ::a [:build ::b 1]]]
+             [:test ::b [:build ::b 1]]]]
            (test-log ig/reverse-run! system)))))
 
 (deftest fold-test
