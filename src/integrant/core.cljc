@@ -19,7 +19,7 @@
 (defn valid-config-key?
   "Returns true if the key is a keyword or valid composite key."
   [key]
-  (or (keyword? key) (composite-key? key)))
+  (or (qualified-keyword? key) (composite-key? key)))
 
 (defn ref
   "Create a reference to a top-level key in a config map."
