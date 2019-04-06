@@ -212,7 +212,7 @@
             :config config
             :key key}))
 
-(defn- resolve-ref [config resolvef ref]
+(defn resolve-ref [config resolvef ref]
   (let [[k v] (first (find-derived config (ref-key ref)))]
     (resolvef k v)))
 
