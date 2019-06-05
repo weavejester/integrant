@@ -111,7 +111,7 @@
   derived dependencies. Takes the following options:
 
   `:include-refsets?`
-  : whether to include refsets in the dependency graph (defauls to true)"
+  : whether to include refsets in the dependency graph (defaults to true)"
   ([config]
    (dependency-graph config {}))
   ([config {:keys [include-refsets?] :or {include-refsets? true}}]
