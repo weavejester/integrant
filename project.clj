@@ -5,7 +5,7 @@
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [weavejester/dependency "0.2.1"]]
-  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.946"]]}}
+  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.10.597"]]}}
   :plugins [[lein-codox "0.10.4"]
             [lein-doo "0.1.7"]]
   :codox
