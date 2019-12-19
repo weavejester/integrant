@@ -434,6 +434,29 @@ ExceptionInfo Spec failed on key :adapter/jetty when building system
 val: {:port 3000} fails predicate: (contains? % :handler)
 ```
 
+#### Spec Alternatives
+
+Integrant can be configured to use alternative validation libraries. To do so
+you must overwrite the default value of the `ig/assert-pre-init-spec` multimethod
+before calling `ig/init`. Below is an example of how you could use
+[malli](https://github.com/metosin/malli) instead of spec.
+
+``` clojure
+(defmethod ig/pre-init-spec :adapter/jetty [_]
+  [:map [:port pos-int?] [:handler fn?]])
+
+(defmethod ig/assert-pre-init-spec :default [system key value]
+  (when-some [schema (ig/pre-init-spec key)]
+    (when-some [error (m/explain schema value)]
+      (throw (ex-info (str "Schema failed on key " key "when building system\n")
+                      {:reason  ::ig/build-failed-spec
+                       :system  system
+                       :key     key
+                       :value   value
+                       :schema  schema
+                       :explain error})))))
+```
+
 ### Loading namespaces
 
 It can be hard to remember to load all the namespaces that contain the

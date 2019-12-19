@@ -404,7 +404,15 @@
             :spec     spec
             :explain  ed}))
 
-(defn- assert-pre-init-spec [system key value]
+(defmulti assert-pre-init-spec
+  "Function that is used to assert that the data used to initialize the key matches the
+  data returned by `pre-init-spec`.
+
+  Defaults to asserting with `spec` but is configurable to allow alternative schema engines."
+  {:arglists '([system key value])}
+  (fn [_ _ _] :default))
+
+(defmethod assert-pre-init-spec :default [system key value]
   (when-let [spec (pre-init-spec key)]
     (when-not (s/valid? spec value)
       (throw (spec-exception system key value spec (s/explain-data spec value))))))
