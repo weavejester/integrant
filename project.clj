@@ -12,14 +12,7 @@
   {:output-path "codox"
    :source-uri "http://github.com/weavejester/integrant/blob/{version}/{filepath}#L{line}"}
   :cljsbuild
-  {:builds [{:id "test-phantom"
-             :source-paths ["src" "test"]
-             :compiler {:output-to  "target/cljs/test-phantom/test-integrant.js"
-                        :output-dir "target/cljs/test-phantom/out"
-                        :main integrant.test-runner
-                        :optimizations :none
-                        :process-shim false}}
-            {:id "test-nashorn"
+  {:builds [{:id "test-nashorn"
              :source-paths ["src" "test"]
              :compiler {:output-to  "target/cljs/test-nashorn/test-integrant.js"
                         :output-dir "target/cljs/test-nashorn/out"
@@ -34,10 +27,9 @@
                         :main integrant.test-runner
                         :optimizations :none
                         :process-shim false}}]}
-  :aliases {"test-phantom" ["doo" "phantom" "test-phantom" "once"]
-            "test-nashorn" ["doo" "nashorn" "test-nashorn" "once"]
+  :aliases {"test-nashorn" ["doo" "nashorn" "test-nashorn" "once"]
             "test-node"    ["doo" "node" "test-node" "once"]
-            "test-cljs"    ["do" ["test-phantom"] ["test-nashorn"] ["test-node"]]
+            "test-cljs"    ["do" ["test-nashorn"] ["test-node"]]
             "test-all"     ["do" ["test"] ["test-cljs"]]
             "test"         ["test" ":only" "integrant.core-test"]})
 
