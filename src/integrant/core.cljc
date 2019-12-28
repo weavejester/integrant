@@ -57,6 +57,13 @@
     (set (for [[k v] (find-derived config key)]
            (resolvef k v)))))
 
+(defrecord RefMap [key]
+  RefLike
+  (ref-key [_] key)
+  (ref-resolve [_ config resolvef]
+    (into {} (for [[k v] (find-derived config key)]
+               [k (resolvef k v)]))))
+
 (defn- composite-key? [keys]
   (and (vector? keys) (every? qualified-keyword? keys)))
 
@@ -77,6 +84,12 @@
   {:pre [(valid-config-key? key)]}
   (->RefSet key))
 
+(defn refmap
+  "Create a map of references to all matching top-level keys in a config map."
+  [key]
+  {:pre [(valid-config-key? key)]}
+  (->RefMap key))
+
 (defn ref?
   "Return true if its argument is a ref."
   [x]
@@ -87,8 +100,13 @@
   [x]
   (instance? RefSet x))
 
+(defn refmap?
+  "Return true if its argument is a refmap."
+  [x]
+  (instance? RefMap x))
+
 (defn reflike?
-  "Return true if its argument is a ref or a refset."
+  "Return true if its argument is a ref, refset or a refmap."
   [x]
   (satisfies? RefLike x))
 
@@ -113,22 +131,30 @@
       (throw (ambiguous-key-exception m k (map key kvs))))
     (first kvs)))
 
-(defn- find-derived-refs [config v include-refsets?]
-  (->> (depth-search (if include-refsets? reflike? ref?) v)
-       (map ref-key)
-       (mapcat #(map key (find-derived config %)))))
+(defn- find-derived-refs [config v include-refsets? include-refmaps?]
+  (let [preds (cond-> #{ref?}
+                      include-refsets? (conj refset?)
+                      include-refmaps? (conj refmap?))
+        pred (fn [r] (some #(% r) preds))]
+    (->> (depth-search pred v)
+         (map ref-key)
+         (mapcat #(map key (find-derived config %))))))
 
 (defn dependency-graph
   "Return a dependency graph of all the refs and refsets in a config. Resolves
   derived dependencies. Takes the following options:
 
   `:include-refsets?`
-  : whether to include refsets in the dependency graph (defaults to true)"
+  : whether to include refsets in the dependency graph (defaults to true)
+
+  `:include-refmaps?`
+  : whether to include refmaps in the dependency graph (defaults to true)"
   ([config]
    (dependency-graph config {}))
-  ([config {:keys [include-refsets?] :or {include-refsets? true}}]
+  ([config {:keys [include-refsets? include-refmaps?]
+            :or {include-refsets? true include-refmaps? true}}]
    (letfn [(find-refs [v]
-             (find-derived-refs config v include-refsets?))]
+             (find-derived-refs config v include-refsets? include-refmaps?))]
      (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
                 (dep/graph)
                 config))))
@@ -141,7 +167,8 @@
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]
-  (let [graph  (dependency-graph config {:include-refsets? false})
+  (let [graph  (dependency-graph config {:include-refsets? false
+                                         :include-refmaps? false})
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
@@ -154,7 +181,9 @@
   (reverse (find-keys config keys dep/transitive-dependents-set)))
 
 #?(:clj
-   (def ^:private default-readers {'ig/ref ref, 'ig/refset refset}))
+   (def ^:private default-readers {'ig/ref ref
+                                   'ig/refset refset
+                                   'ig/refmap refmap}))
 
 #?(:clj
    (defn read-string

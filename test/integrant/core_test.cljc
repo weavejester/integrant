@@ -65,6 +65,12 @@
   (is (ig/reflike? (ig/refset ::foo)))
   (is (ig/reflike? (ig/refset [::foo ::bar]))))
 
+(deftest refmap-test
+  (is (ig/refmap? (ig/refmap ::foo)))
+  (is (ig/refmap? (ig/refmap [::foo ::bar])))
+  (is (ig/reflike? (ig/refmap ::foo)))
+  (is (ig/reflike? (ig/refmap [::foo ::bar]))))
+
 (deftest composite-keyword-test
   (let [k (ig/composite-keyword [::a ::b])]
     (is (isa? k ::a))
@@ -86,7 +92,11 @@
   (is (= (ig/expand {::a (ig/refset ::ppp), ::p 1, ::pp 2})
          {::a #{1 2}, ::p 1, ::pp 2}))
   (is (= (ig/expand {::a (ig/refset ::ppp)})
-         {::a #{}})))
+         {::a #{}}))
+  (is (= (ig/expand {::a (ig/refmap ::ppp), ::p 1, ::pp 2})
+         {::a {::p 1 ::pp 2}, ::p 1, ::pp 2}))
+  (is (= (ig/expand {::a (ig/refmap ::ppp)})
+         {::a {}})))
 
 #?(:clj
    (deftest read-string-test
@@ -94,6 +104,8 @@
             {:foo/a (ig/ref :foo/b), :foo/b 1}))
      (is (= (ig/read-string "{:foo/a #ig/refset :foo/b, :foo/b 1}")
             {:foo/a (ig/refset :foo/b), :foo/b 1}))
+     (is (= (ig/read-string "{:foo/a #ig/refmap :foo/b, :foo/b 1}")
+            {:foo/a (ig/refmap :foo/b), :foo/b 1}))
      (is (= (ig/read-string {:readers {'test/var find-var}}
                             "{:foo/a #test/var clojure.core/+}")
             {:foo/a #'+}))))
@@ -163,6 +175,19 @@
 
     (testing "graph without refsets"
       (let [g (ig/dependency-graph m {:include-refsets? false})]
+        (is (dep/depends? g ::a ::p))
+        (is (not (dep/depends? g ::b ::p)))
+        (is (not (dep/depends? g ::b ::pp))))))
+
+  (let [m {::a (ig/ref ::p), ::b (ig/refmap ::ppp) ::p 1, ::pp 2}]
+    (testing "graph with refmaps"
+      (let [g (ig/dependency-graph m)]
+        (is (dep/depends? g ::a ::p))
+        (is (dep/depends? g ::b ::p))
+        (is (dep/depends? g ::b ::pp))))
+
+    (testing "graph without refmaps"
+      (let [g (ig/dependency-graph m {:include-refmaps? false})]
         (is (dep/depends? g ::a ::p))
         (is (not (dep/depends? g ::b ::p)))
         (is (not (dep/depends? g ::b ::pp)))))))
@@ -295,6 +320,22 @@
       (is (= (ig/init m [::a])      {::a [#{}]}))
       (is (= (ig/init m [::a ::p])  {::a [#{[1]}] ::p [1]}))
       (is (= (ig/init m [::a ::pp]) {::a [#{[1] [2]}] ::p [1] ::pp [2]}))))
+
+  (testing "with refmaps"
+    (reset! log [])
+    (let [m (ig/init {::a (ig/refmap ::ppp), ::p 1, ::pp 2})]
+      (is (= m {::a [{::p [1] ::pp [2]}], ::p [1], ::pp [2]}))
+      (is (= @log [[:init ::p 1]
+                   [:init ::pp 2]
+                   [:init ::a {::p [1] ::pp [2]}]]))))
+
+  (testing "with refmaps and keys"
+    (reset! log [])
+    (let [m {::a (ig/refmap ::ppp), ::p 1, ::pp 2}]
+      (is (= (ig/init m [::a])      {::a [{}]}))
+      (is (= (ig/init m [::a ::p])  {::a [{::p [1]}] ::p [1]}))
+      (is (= (ig/init m [::a ::pp]) {::a [{::p [1] ::pp [2]}]
+                                     ::p [1] ::pp [2]}))))
 
   (testing "large config"
     (is (= (ig/init {:a/a1 {} :a/a2 {:_ (ig/ref :a/a1)}
