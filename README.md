@@ -44,7 +44,7 @@ initialized into a system.
 To use the latest release, add the following to your project
 `:dependencies`:
 
-    [integrant "0.7.0"]
+    [integrant "0.8.0"]
 
 ## Presentations
 

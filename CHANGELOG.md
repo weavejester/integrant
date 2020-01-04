@@ -1,3 +1,7 @@
+## 0.8.0 (2020-01-04)
+
+* Added check to ensure keys have namespaces
+
 ## 0.8.0-alpha2 (2018-10-26)
 
 * Fixed `resolve-ref` not working under `resume`
