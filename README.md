@@ -235,9 +235,46 @@ Like `init` and `halt!`, `resume` and `suspend!` can be supplied with
 a collection of keys to narrow down the parts of the configuration
 that are suspended or resumed.
 
+### Resolving
+
+It's sometimes useful to hide information when resolving a
+reference. In our previous example, we changed the initiation from:
+
+```clojure
+(defmethod ig/init-key :adapter/jetty [_ {:keys [handler] :as opts}]
+  (jetty/run-jetty handler (-> opts (dissoc :handler) (assoc :join? false))))
+```
+
+To:
+
+```clojure
+(defmethod ig/init-key :adapter/jetty [_ opts]
+  (let [handler (atom (delay (:handler opts)))
+        options (-> opts (dissoc :handler) (assoc :join? false))]
+    {:handler handler
+     :server  (jetty/run-jetty (fn [req] (@@handler req)) options)}))
+```
+
+This changed the return value from a Jetty server object to a map, so
+that `suspend!` and `resume` would be able to temporarily block the
+handler. However, this also changes the return type! Ideally we'd want
+to pass the handler atom to `suspend-key!` and `resume-key`, without
+affecting how references are resolved in the configuration.
+
+To solve this, we can use `resolve-key`:
+
+```clojure
+(defmethod ig/resolve-key :adapter/jetty [_ {:keys [server]}]
+  server)
+```
+
+Before a reference is resolved, `resolve-key` is applied. This allows
+us to cut out information that is only relevant behind the scenes. In
+this case, we replace the map with the container Jetty server object.
+
 ### Prepping
 
-Sometimes keys require some preparation. Perhaps you have a
+Sometimes keys also require some preparation. Perhaps you have a
 particularly complex set of default values, or perhaps you want to add
 in default references to other keys. In these cases, the `prep-key`
 method can help.
