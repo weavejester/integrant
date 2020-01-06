@@ -13,6 +13,11 @@
 (defrecord Ref    [key] RefLike (ref-key [_] key))
 (defrecord RefSet [key] RefLike (ref-key [_] key))
 
+(defn- invalid-ref-exception [ref]
+  (ex-info (str "Invalid reference: " ref ". Must be a qualified keyword or a "
+                "vector of qualified keywords.")
+           {:reason ::invalid-ref, :ref ref}))
+
 (defn- composite-key? [keys]
   (and (vector? keys) (every? qualified-keyword? keys)))
 
@@ -24,13 +29,15 @@
 (defn ref
   "Create a reference to a top-level key in a config map."
   [key]
-  {:pre [(valid-config-key? key)]}
+  (when-not (valid-config-key? key)
+    (throw (invalid-ref-exception key)))
   (->Ref key))
 
 (defn refset
   "Create a set of references to all matching top-level keys in a config map."
   [key]
-  {:pre [(valid-config-key? key)]}
+  (when-not (valid-config-key? key)
+    (throw (invalid-ref-exception key)))
   (->RefSet key))
 
 (defn ref?
