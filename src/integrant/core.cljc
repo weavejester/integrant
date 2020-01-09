@@ -8,10 +8,54 @@
             [weavejester.dependency :as dep]))
 
 (defprotocol RefLike
-  (ref-key [r] "Return the key of the reference."))
+  (ref-key [r] "Return the key of the reference.")
+  (ref-resolve [r config resolvef] "Return the resolved value."))
 
-(defrecord Ref    [key] RefLike (ref-key [_] key))
-(defrecord RefSet [key] RefLike (ref-key [_] key))
+(defonce
+  ^{:doc "Return a unique keyword that is derived from an ordered collection of
+  keywords. The function will return the same keyword for the same collection."
+    :arglists '([kws])}
+  composite-keyword
+  (memoize
+   (fn [kws]
+     (let [parts     (for [kw kws] (str (namespace kw) "." (name kw)))
+           prefix    (str (str/join "+" parts) "_")
+           composite (keyword "integrant.composite" (str (gensym prefix)))]
+       (doseq [kw kws] (derive composite kw))
+       composite))))
+
+(defn- normalize-key [k]
+  (if (vector? k) (composite-keyword k) k))
+
+(defn derived-from?
+  "Return true if a key is derived from candidate keyword or vector of
+  keywords."
+  [key candidate]
+  (let [key (normalize-key key)]
+    (if (vector? candidate)
+      (every? #(isa? key %) candidate)
+      (isa? key candidate))))
+
+(defn find-derived
+  "Return a seq of all entries in a map, m, where the key is derived from the
+  a candidate key, k. If there are no matching keys, nil is returned. The
+  candidate key may be a keyword, or vector of keywords."
+  [m k]
+  (seq (filter #(or (= (key %) k) (derived-from? (key %) k)) m)))
+
+(defrecord Ref [key]
+  RefLike
+  (ref-key [_] key)
+  (ref-resolve [_ config resolvef]
+    (let [[k v] (first (find-derived config key))]
+      (resolvef k v))))
+
+(defrecord RefSet [key]
+  RefLike
+  (ref-key [_] key)
+  (ref-resolve [_ config resolvef]
+    (set (for [[k v] (find-derived config key)]
+           (resolvef k v)))))
 
 (defn- composite-key? [keys]
   (and (vector? keys) (every? qualified-keyword? keys)))
@@ -51,22 +95,6 @@
 (defn- depth-search [pred? coll]
   (filter pred? (tree-seq coll? seq coll)))
 
-(defonce
-  ^{:doc "Return a unique keyword that is derived from an ordered collection of
-  keywords. The function will return the same keyword for the same collection."
-    :arglists '([kws])}
-  composite-keyword
-  (memoize
-   (fn [kws]
-     (let [parts     (for [kw kws] (str (namespace kw) "." (name kw)))
-           prefix    (str (str/join "+" parts) "_")
-           composite (keyword "integrant.composite" (str (gensym prefix)))]
-       (doseq [kw kws] (derive composite kw))
-       composite))))
-
-(defn- normalize-key [k]
-  (if (vector? k) (composite-keyword k) k))
-
 (defn- ambiguous-key-exception [config key matching-keys]
   (ex-info (str "Ambiguous key: " key ". Found multiple candidates: "
                 (str/join ", " matching-keys))
@@ -74,22 +102,6 @@
             :config config
             :key    key
             :matching-keys matching-keys}))
-
-(defn derived-from?
-  "Return true if a key is derived from candidate keyword or vector of
-  keywords."
-  [key candidate]
-  (let [key (normalize-key key)]
-    (if (vector? candidate)
-      (every? #(isa? key %) candidate)
-      (isa? key candidate))))
-
-(defn find-derived
-  "Return a seq of all entries in a map, m, where the key is derived from the
-  a candidate key, k. If there are no matching keys, nil is returned. The
-  candidate key may be a keyword, or vector of keywords."
-  [m k]
-  (seq (filter #(or (= (key %) k) (derived-from? (key %) k)) m)))
 
 (defn find-derived-1
   "Return the map entry in a map, m, where the key is derived from the keyword,
@@ -212,20 +224,9 @@
             :config config
             :key key}))
 
-(defn- resolve-ref [config resolvef ref]
-  (let [[k v] (first (find-derived config (ref-key ref)))]
-    (resolvef k v)))
-
-(defn- resolve-refset [config resolvef refset]
-  (set (for [[k v] (find-derived config (ref-key refset))]
-         (resolvef k v))))
-
 (defn- expand-key [config resolvef value]
   (walk/postwalk
-   #(cond
-      (ref? %)    (resolve-ref config resolvef %)
-      (refset? %) (resolve-refset config resolvef %)
-      :else       %)
+   #(if (reflike? %) (ref-resolve % config resolvef) %)
    value))
 
 (defn- run-exception [system completed remaining f k v t]
