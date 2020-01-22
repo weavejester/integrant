@@ -491,6 +491,28 @@ This will attempt to load the namespace `foo.component` and also
 `foo.component.bar`. A list of all successfully loaded namespaces will
 be returned from the function. Missing namespaces are ignored.
 
+## Documenting your keys
+
+You can use the `doc-key` multimethod to add a docstring to your key. This has
+no direct effect on your system and is generally useful for generating
+documentation.
+
+
+```clojure
+(defmethod ig/doc-key :handler/greet-all [_]
+  "An HTTP handler that responds with a greeting to all `:names'
+
+  | key      | description                            |
+  |  --------|----------------------------------------|
+  | `:names` | A list of string names ; default: `[]` |
+
+  Example:
+  ```edn
+  {:handler/greet-all {:names #ig/refset :const/name}
+  :const.name/alice   {:name \"Alice\"}
+  :const.name/bob     {:name \"Bob\"}}
+  ```")
+```
 ## Reloaded workflow
 
 See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to 
