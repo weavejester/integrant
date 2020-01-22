@@ -326,6 +326,14 @@
              (with-meta {} {::origin config})
              (map (fn [k] [k (config k)]) relevant-keys)))))
 
+(defmulti doc-key
+  "Add a docstring to a key. This has no direct effect on your system and is
+  generally useful for generating documentation."
+  {:arglists '([key])}
+  (fn [key] (normalize-key key)))
+
+(defmethod doc-key :default [_] nil)
+
 (defmulti resolve-key
   "Return a value to substitute for a reference prior to initiation. By default
   the value of the key is returned unaltered. This can be used to hide
