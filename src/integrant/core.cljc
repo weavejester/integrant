@@ -1,6 +1,7 @@
 (ns integrant.core
   (:refer-clojure :exclude [ref read-string run!])
-  (:require #?(:clj [clojure.edn :as edn])
+  (:require #?(:clj  [clojure.edn :as edn]
+               :cljs [clojure.tools.reader.edn :as edn])
             [clojure.walk :as walk]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
@@ -141,18 +142,16 @@
 (defn- reverse-dependent-keys [config keys]
   (reverse (find-keys config keys dep/transitive-dependents-set)))
 
-#?(:clj
-   (def ^:private default-readers {'ig/ref ref, 'ig/refset refset}))
+(def ^:private default-readers {'ig/ref ref, 'ig/refset refset})
 
-#?(:clj
-   (defn read-string
-    "Read a config from a string of edn. Refs may be denotied by tagging keywords
-     with #ig/ref."
-     ([s]
-      (read-string {:eof nil} s))
-     ([opts s]
-      (let [readers (merge default-readers (:readers opts {}))]
-        (edn/read-string (assoc opts :readers readers) s)))))
+(defn read-string
+  "Read a config from a string of edn. Refs may be denotied by tagging keywords
+  with #ig/ref."
+  ([s]
+   (read-string {:eof nil} s))
+  ([opts s]
+   (let [readers (merge default-readers (:readers opts {}))]
+     (edn/read-string (assoc opts :readers readers) s))))
 
 #?(:clj
    (defn- keyword->namespaces [kw]
