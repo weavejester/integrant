@@ -24,8 +24,19 @@
        (doseq [kw kws] (derive composite kw))
        composite))))
 
-(defn- normalize-key [k]
-  (if (vector? k) (composite-keyword k) k))
+(defn- composite-key? [keys]
+  (and (vector? keys) (every? qualified-keyword? keys)))
+
+(defn valid-config-key?
+  "Return true if the key is a keyword or valid composite key."
+  [key]
+  (or (qualified-keyword? key) (composite-key? key)))
+
+(defn normalize-key
+  "Given a valid Integrant key, return a keyword that uniquely identifies it."
+  [key]
+  {:pre [(valid-config-key? key)]}
+  (if (composite-key? key) (composite-keyword key) key))
 
 (defn derived-from?
   "Return true if a key is derived from candidate keyword or vector of
@@ -56,14 +67,6 @@
   (ref-resolve [_ config resolvef]
     (set (for [[k v] (find-derived config key)]
            (resolvef k v)))))
-
-(defn- composite-key? [keys]
-  (and (vector? keys) (every? qualified-keyword? keys)))
-
-(defn valid-config-key?
-  "Returns true if the key is a keyword or valid composite key."
-  [key]
-  (or (qualified-keyword? key) (composite-key? key)))
 
 (defn ref
   "Create a reference to a top-level key in a config map."
