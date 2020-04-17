@@ -12,6 +12,25 @@
   (ref-key [r] "Return the key of the reference.")
   (ref-resolve [r config resolvef] "Return the resolved value."))
 
+
+(def ^:dynamic *hierarchy* nil)
+
+(defn derive* [tag parent]
+  (if (some? *hierarchy*)
+    (derive *hierarchy* tag parent)
+    (derive tag parent)))
+
+(defn isa?* [child parent]
+  (if (some? *hierarchy*)
+    (isa? *hierarchy* child parent)
+    (isa? child parent)))
+
+(defn descendants* [tag]
+  (if (some? *hierarchy*)
+    (descendants *hierarchy* tag)
+    (descendants tag)))
+
+
 (defonce
   ^{:doc "Return a unique keyword that is derived from an ordered collection of
   keywords. The function will return the same keyword for the same collection."
@@ -22,8 +41,9 @@
      (let [parts     (for [kw kws] (str (namespace kw) "." (name kw)))
            prefix    (str (str/join "+" parts) "_")
            composite (keyword "integrant.composite" (str (gensym prefix)))]
-       (doseq [kw kws] (derive composite kw))
+       (doseq [kw kws] (derive* composite kw))
        composite))))
+
 
 (defn- invalid-ref-exception [ref]
   (ex-info (str "Invalid reference: " ref ". Must be a qualified keyword or a "
@@ -50,8 +70,8 @@
   [key candidate]
   (let [key (normalize-key key)]
     (if (vector? candidate)
-      (every? #(isa? key %) candidate)
-      (isa? key candidate))))
+      (every? #(isa?* key %) candidate)
+      (isa?* key candidate))))
 
 (defn find-derived
   "Return a seq of all entries in a map, m, where the key is derived from the
@@ -306,7 +326,12 @@
          (throw (build-exception system f k v t)))))
 
 (defn- build-key [f assertf resolvef system [k v]]
-  (let [v' (expand-key system resolvef v)]
+  (let [k' (if-some [[descendant & remaining] (not-empty (descendants* k))]
+             (if remaining
+               k
+               descendant)
+             k)
+        v' (expand-key system resolvef v)]
     (assertf system k v')
     (-> system
         (assoc k (try-build-action system f k v'))
@@ -437,8 +462,11 @@
   ([config]
    (init config (keys config)))
   ([config keys]
+   (init config keys nil))
+  ([config keys hierarchy]
    {:pre [(map? config)]}
-   (build config keys init-key assert-pre-init-spec resolve-key)))
+   (binding [*hierarchy* hierarchy]
+     (build config keys init-key assert-pre-init-spec resolve-key))))
 
 (defn halt!
   "Halt a system map by applying halt-key! in reverse dependency order."
