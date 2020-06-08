@@ -347,7 +347,7 @@ However, you could also make use of composite keys. If your
 configuration contains a key that is a vector of keywords, Integrant
 treats it as being derived from all the keywords inside it.
 
-So your could also write:
+So you could also write:
 
 ```edn
 {[:adapter/jetty :example/web-1] {:port 8080, :handler #ig/ref :handler/greet}
