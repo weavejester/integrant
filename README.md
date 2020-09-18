@@ -501,6 +501,9 @@ workflow](http://thinkrelevance.com/blog/2013/06/04/clojure-workflow-reloaded).
 
 * [API docs](https://weavejester.github.io/integrant/integrant.core.html)
 
+## External resources
+* Simple web application using Ring/Reitit and Integrant: https://github.com/PrestanceDesign/usermanager-reitit-integrant-example
+
 ## License
 
 Copyright © 2018 James Reeves
