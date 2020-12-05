@@ -57,13 +57,21 @@
   (is (ig/ref? (ig/ref ::foo)))
   (is (ig/ref? (ig/ref [::foo ::bar])))
   (is (ig/reflike? (ig/ref ::foo)))
-  (is (ig/reflike? (ig/ref [::foo ::bar]))))
+  (is (ig/reflike? (ig/ref [::foo ::bar])))
+  (is (= #{::foo} (ig/ref-mandatory-keys (ig/ref ::foo))))
+  (is (= #{::foo} (ig/ref-all-keys (ig/ref ::foo))))
+  (is (= #{[::foo ::bar]} (ig/ref-mandatory-keys (ig/ref [::foo ::bar]))))
+  (is (= #{[::foo ::bar]} (ig/ref-all-keys (ig/ref [::foo ::bar])))))
 
 (deftest refset-test
   (is (ig/refset? (ig/refset ::foo)))
   (is (ig/refset? (ig/refset [::foo ::bar])))
   (is (ig/reflike? (ig/refset ::foo)))
-  (is (ig/reflike? (ig/refset [::foo ::bar]))))
+  (is (ig/reflike? (ig/refset [::foo ::bar])))
+  (is (= #{} (ig/ref-mandatory-keys (ig/refset ::foo))))
+  (is (= #{::foo} (ig/ref-all-keys (ig/refset ::foo))))
+  (is (= #{} (ig/ref-mandatory-keys (ig/refset [::foo ::bar]))))
+  (is (= #{[::foo ::bar]} (ig/ref-all-keys (ig/refset [::foo ::bar])))))
 
 (deftest composite-keyword-test
   (let [k (ig/composite-keyword [::a ::b])]
@@ -152,6 +160,14 @@
               '#{integrant.test.foo}))
        (is (some? (find-ns 'integrant.test.foo))))))
 
+(defrecord RefThing [key]
+  ig/RefLike
+  (ref-key [_] key)
+  (ref-mandatory-keys [_] #{::p})
+  (ref-all-keys [_] #{::pp ::p})
+  (ref-resolve [_ config resolvef]
+    (set (for [[k v] (ig/find-derived config key)]
+           (resolvef k v)))))
 
 (deftest dependency-graph-test
   (let [m {::a (ig/ref ::p), ::b (ig/refset ::ppp) ::p 1, ::pp 2}]
@@ -165,6 +181,19 @@
       (let [g (ig/dependency-graph m {:optional-deps? false})]
         (is (dep/depends? g ::a ::p))
         (is (not (dep/depends? g ::b ::p)))
+        (is (not (dep/depends? g ::b ::pp))))))
+  (let [m {::a (->RefThing ::p), ::b (->RefThing ::ppp), ::p 1, ::pp 2}]
+    (testing "graph with refthings and all deps"
+      (let [g (ig/dependency-graph m)]
+        (is (dep/depends? g ::a ::p))
+        (is (dep/depends? g ::a ::pp))
+        (is (dep/depends? g ::b ::p))
+        (is (dep/depends? g ::b ::pp))))
+    (testing "graph with refthings and and mandatory deps"
+      (let [g (ig/dependency-graph m {:optional-deps? false})]
+        (is (dep/depends? g ::a ::p))
+        (is (not (dep/depends? g ::a ::pp)))
+        (is (dep/depends? g ::b ::p))
         (is (not (dep/depends? g ::b ::pp)))))))
 
 (deftest key-comparator-test
