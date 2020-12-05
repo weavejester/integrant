@@ -162,7 +162,7 @@
         (is (dep/depends? g ::b ::pp))))
 
     (testing "graph without refsets"
-      (let [g (ig/dependency-graph m {:include-refsets? false})]
+      (let [g (ig/dependency-graph m {:optional-deps? false})]
         (is (dep/depends? g ::a ::p))
         (is (not (dep/depends? g ::b ::p)))
         (is (not (dep/depends? g ::b ::pp)))))))

@@ -133,13 +133,13 @@
   "Return a dependency graph of all the refs and refsets in a config. Resolves
   derived dependencies. Takes the following options:
 
-  `:include-refsets?`
-  : whether to include refsets in the dependency graph (defaults to true)"
+  `:optional-deps?`
+  : whether to include optional deps in the dependency graph (defaults to true)"
   ([config]
    (dependency-graph config {}))
-  ([config {:keys [include-refsets?] :or {include-refsets? true}}]
+  ([config {:keys [optional-deps?] :or {optional-deps? true}}]
    (letfn [(find-refs [v]
-             (find-derived-refs config v include-refsets?))]
+             (find-derived-refs config v optional-deps?))]
      (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
                 (dep/graph)
                 config))))
@@ -152,7 +152,7 @@
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]
-  (let [graph  (dependency-graph config {:include-refsets? false})
+  (let [graph  (dependency-graph config {:optional-deps? false})
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
