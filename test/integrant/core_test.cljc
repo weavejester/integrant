@@ -99,6 +99,16 @@
             {:foo/a #'+}))))
 
 #?(:clj
+   (deftest read-string-from-resource-test
+     (is (= (ig/read-string-from-resource "config-test-1.edn")
+            {:foo/a (ig/ref :foo/b), :foo/b 1}))
+     (is (= (ig/read-string-from-resource "config-test-2.edn")
+            {:foo/a (ig/refset :foo/b), :foo/b 1}))
+     (is (= (ig/read-string-from-resource {:readers {'test/var find-var}}
+                                          "config-test-3.edn")
+            {:foo/a #'+}))))
+
+#?(:clj
    (defn- remove-lib [lib]
      (remove-ns lib)
      (dosync (alter @#'clojure.core/*loaded-libs* disj lib))))
