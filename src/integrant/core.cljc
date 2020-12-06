@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [ref read-string run!])
   (:require #?(:clj  [clojure.edn :as edn]
                :cljs [clojure.tools.reader.edn :as edn])
+            #?(:clj  [clojure.java.io :as io])
             [clojure.walk :as walk]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
@@ -175,6 +176,12 @@
    (let [readers (merge default-readers (:readers opts {}))]
      (edn/read-string (assoc opts :readers readers) s))))
 
+#?(:clj (defn read-string-from-resource
+          "Read a config resource file placed in resources on the classpath."
+          ([file-name]
+           (read-string (slurp (io/resource file-name))))
+          ([opts file-name]
+           (read-string opts (slurp (io/resource file-name))))))
 #?(:clj
    (defn- keyword->namespaces [kw]
      (if-let [ns (namespace kw)]
