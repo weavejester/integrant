@@ -83,6 +83,13 @@ And load it with Integrant's version of `read-string`:
   (ig/read-string (slurp "config.edn")))
 ```
 
+Or read resource from the classpath using `read-string-from-resource`:
+
+```clojure
+(def config
+  (ig/read-string-from-resource "config.edn"))
+```
+
 ### Initializing and halting
 
 Once you have a configuration, Integrant needs to be told how to
