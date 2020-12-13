@@ -10,6 +10,8 @@
 
 (defprotocol RefLike
   (ref-key [r] "Return the key of the reference.")
+  (ref-mandatory-keys [r] "Returns the mandatory keys.")
+  (ref-all-keys [r] "Returns the mandatory and optional keys.")
   (ref-resolve [r config resolvef] "Return the resolved value."))
 
 (defonce
@@ -63,6 +65,8 @@
 (defrecord Ref [key]
   RefLike
   (ref-key [_] key)
+  (ref-mandatory-keys [_] #{key})
+  (ref-all-keys [_] #{key})
   (ref-resolve [_ config resolvef]
     (let [[k v] (first (find-derived config key))]
       (resolvef k v))))
@@ -70,6 +74,8 @@
 (defrecord RefSet [key]
   RefLike
   (ref-key [_] key)
+  (ref-mandatory-keys [_] #{})
+  (ref-all-keys [_] #{key})
   (ref-resolve [_ config resolvef]
     (set (for [[k v] (find-derived config key)]
            (resolvef k v)))))
@@ -124,22 +130,22 @@
       (throw (ambiguous-key-exception m k (map key kvs))))
     (first kvs)))
 
-(defn- find-derived-refs [config v include-refsets?]
-  (->> (depth-search (if include-refsets? reflike? ref?) v)
-       (map ref-key)
+(defn- find-derived-refs [config v optional-deps?]
+  (->> (depth-search reflike? v)
+       (mapcat (if optional-deps? ref-all-keys ref-mandatory-keys))
        (mapcat #(map key (find-derived config %)))))
 
 (defn dependency-graph
   "Return a dependency graph of all the refs and refsets in a config. Resolves
   derived dependencies. Takes the following options:
 
-  `:include-refsets?`
-  : whether to include refsets in the dependency graph (defaults to true)"
+  `:optional-deps?`
+  : whether to include optional deps in the dependency graph (defaults to true)"
   ([config]
    (dependency-graph config {}))
-  ([config {:keys [include-refsets?] :or {include-refsets? true}}]
+  ([config {:keys [optional-deps?] :or {optional-deps? true}}]
    (letfn [(find-refs [v]
-             (find-derived-refs config v include-refsets?))]
+             (find-derived-refs config v optional-deps?))]
      (reduce-kv (fn [g k v] (reduce #(dep/depend %1 k %2) g (find-refs v)))
                 (dep/graph)
                 config))))
@@ -152,7 +158,7 @@
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
 (defn- find-keys [config keys f]
-  (let [graph  (dependency-graph config {:include-refsets? false})
+  (let [graph  (dependency-graph config {:optional-deps? false})
         keyset (set (mapcat #(map key (find-derived config %)) keys))]
     (->> (f graph keyset)
          (set/union keyset)
