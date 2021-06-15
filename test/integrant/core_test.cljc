@@ -190,7 +190,7 @@
     (is (= (ig/find-derived-1 {::a "x" ::p "y"} ::pp)
            [::p "y"])))
 
-  (testing "ambigous key"
+  (testing "ambiguous key"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "Ambiguous key: " ::pp "\\. "
@@ -209,7 +209,7 @@
     (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::pp)
            [[::p "y"] [::pp "z"]])))
 
-  (testing "ambigous key"
+  (testing "ambiguous key"
     (is (= (ig/find-derived {::a "x" ::p "y" ::pp "z"} ::ppp)
            [[::p "y"] [::pp "z"]])))
 
