@@ -104,7 +104,7 @@ Keys are initialized recursively, with the values in the map being
 replaced by the return value from `init-key`.
 
 In the configuration we defined before, `:handler/greet` will be
-initialized first, and it's value replaced with a handler function.
+initialized first, and its value replaced with a handler function.
 When `:adapter/jetty` references `:handler/greet`, it will receive the
 initialized handler function, rather than the raw configuration.
 
@@ -174,7 +174,7 @@ connections and resources that `halt-key!` would close.
 Like `halt-key!`, `suspend-key!` should be both side-effectful and
 idempotent.
 
-The `resume` function acts like `init`, but takes an additional
+The `resume` function acts like `init` but takes an additional
 argument specifying a suspended system:
 
 ```clojure
@@ -218,7 +218,7 @@ can change the handler without restarting the server.
 We further encase the handler in a `delay`. This allows us to replace
 it with a `promise` when we suspend the server. Because a promise will
 block until a value is delivered, once suspended the server will
-accept requests but wait around until its resumed.
+accept requests but wait around until it's resumed.
 
 Once we decide to resume the server, we first check to see if the
 options have changed. If they have, we don't take any chances; better
@@ -257,7 +257,7 @@ To:
 
 This changed the return value from a Jetty server object to a map, so
 that `suspend!` and `resume` would be able to temporarily block the
-handler. However, this also changes the return type! Ideally we'd want
+handler. However, this also changes the return type! Ideally, we'd want
 to pass the handler atom to `suspend-key!` and `resume-key`, without
 affecting how references are resolved in the configuration.
 
@@ -302,7 +302,7 @@ references to derived keywords.
 ### Derived keywords
 
 Keywords have an inherited hierarchy. Integrant takes advantage of
-this by allowing keywords to refer to their descendents. For example:
+this by allowing keywords to refer to their descendants. For example:
 
 ```clojure
 (derive :adapter/jetty :adapter/ring)
@@ -431,7 +431,7 @@ values.
 ### Specs
 
 It would be incorrect to write specs directly against the keys used by
-Integrant, as the same key will used in the configuration, during
+Integrant, as the same key will be used in the configuration, during
 initiation, and in the resulting system. All will likely have
 different values.
 
