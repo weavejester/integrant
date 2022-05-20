@@ -151,18 +151,43 @@
   [graph]
   (dep/topo-comparator #(compare (str %1) (str %2)) graph))
 
+(defn node->depth-mapping
+  "Generate a map of node to depth from a graph"
+  [graph]
+  (loop [levels {}
+         current-level 0
+         g graph]
+    (if-let [free-nodes (seq (sequence
+                              (comp (filter #(empty? (dep/immediate-dependencies g %)))
+                                    (distinct))
+                              (dep/nodes g)))]
+      (recur (reduce (fn [acc node]
+                       (assoc acc node current-level))
+                     levels
+                     free-nodes)
+             (inc current-level)
+             (reduce
+              (fn [graph node]
+                (dep/remove-all graph node))
+              g
+              free-nodes))
+      levels)))
+
 (defn- find-keys [config keys f]
   (let [graph  (dependency-graph config {:include-refsets? false})
-        keyset (set (mapcat #(map key (find-derived config %)) keys))]
+        keyset (set (mapcat #(map key (find-derived config %)) keys))
+        comparator (key-comparator (dependency-graph config))]
     (->> (f graph keyset)
          (set/union keyset)
-         (sort (key-comparator (dependency-graph config))))))
+         (group-by (node->depth-mapping (dependency-graph config)))
+         (sort-by first)
+         (map (comp (partial sort comparator) second)))))
 
 (defn- dependent-keys [config keys]
   (find-keys config keys dep/transitive-dependencies-set))
 
 (defn- reverse-dependent-keys [config keys]
-  (reverse (find-keys config keys dep/transitive-dependents-set)))
+  (map reverse (reverse (find-keys config keys dep/transitive-dependents-set))))
 
 (def ^:private default-readers {'ig/ref ref, 'ig/refset refset})
 
@@ -203,6 +228,7 @@
       (load-namespaces config (keys config)))
      ([config keys]
       (doall (->> (dependent-keys config keys)
+                  (mapcat identity)
                   (mapcat #(conj (ancestors %) %))
                   (mapcat key->namespaces)
                   (distinct)
@@ -258,9 +284,15 @@
 (defn- run-loop [system keys f]
   (loop [completed (), remaining keys]
     (when (seq remaining)
-      (let [k (first remaining)]
-        (try-run-action system completed remaining f k)
-        (recur (cons k completed) (rest remaining))))))
+      (let [ks (first remaining)]
+        (recur (loop [completed' completed,
+                      remaining' ks]
+                 (if (seq remaining')
+                   (let [k (first remaining')]
+                     (try-run-action system completed' (reduce concat (rest remaining') remaining) f k)
+                     (recur (cons k completed') (rest remaining')))
+                   completed'))
+               (rest remaining))))))
 
 (defn- system-origin [system]
   (-> system meta ::origin (select-keys (keys system))))
@@ -305,12 +337,25 @@
        (catch #?(:clj Throwable :cljs :default) t
          (throw (build-exception system f k v t)))))
 
-(defn- build-key [f assertf resolvef system [k v]]
-  (let [v' (expand-key system resolvef v)]
-    (assertf system k v')
-    (-> system
-        (assoc k (try-build-action system f k v'))
-        (vary-meta assoc-in [::build k] v'))))
+(defn- build-keys [f assertf resolvef config system ks]
+  (reduce
+   (fn [system fut]
+     (let [[k v v'] #?(:clj (try
+                              @fut
+                              (catch java.util.concurrent.ExecutionException e
+                                (throw (.getCause e))))
+                       :cljs fut)]
+       (-> system
+           (assoc k v')
+           (vary-meta assoc-in [::build k] v))))
+   system
+   (mapv (fn [k]
+           (#?(:clj future
+               :cljs identity)
+             (let [v' (expand-key system resolvef (config k))]
+               (assertf system k v')
+               [k v' (try-build-action system f k v')])))
+         ks)))
 
 (defn build
   "Apply a function f to each key value pair in a configuration map. Keys are
@@ -325,16 +370,16 @@
   ([config keys f assertf resolvef]
    {:pre [(map? config)]}
    (let [relevant-keys   (dependent-keys config keys)
-         relevant-config (select-keys config relevant-keys)]
+         relevant-config (select-keys config (reduce concat relevant-keys))]
      (when-let [invalid-key (first (invalid-composite-keys config))]
        (throw (invalid-composite-key-exception config invalid-key)))
      (when-let [ref (first (ambiguous-refs relevant-config))]
        (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
      (when-let [refs (seq (missing-refs relevant-config))]
        (throw (missing-refs-exception config refs)))
-     (reduce (partial build-key f assertf resolvef)
+     (reduce (partial build-keys f assertf resolvef config)
              (with-meta {} {::origin config})
-             (map (fn [k] [k (config k)]) relevant-keys)))))
+             relevant-keys))))
 
 (defmulti resolve-key
   "Return a value to substitute for a reference prior to initiation. By default
@@ -449,7 +494,7 @@
    (reverse-run! system keys halt-key!)))
 
 (defn- missing-keys [system ks]
-  (remove (set ks) (keys system)))
+  (remove (reduce into #{} ks) (keys system)))
 
 (defn- halt-missing-keys! [config system keys]
   (let [graph        (-> system meta ::origin dependency-graph)
