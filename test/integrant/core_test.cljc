@@ -1,7 +1,7 @@
 (ns integrant.core-test
   (:require [clojure.spec.alpha :as s]
-   #?(:clj  [clojure.test :refer :all]
-      :cljs [cljs.test :refer-macros [are deftest is testing]])
+            #?(:clj  [clojure.test :refer :all]
+               :cljs [cljs.test :refer-macros [are deftest is testing]])
             [integrant.core :as ig]
             [weavejester.dependency :as dep]))
 
@@ -152,7 +152,6 @@
               '#{integrant.test.foo}))
        (is (some? (find-ns 'integrant.test.foo))))))
 
-
 (deftest dependency-graph-test
   (let [m {::a (ig/ref ::p), ::b (ig/refset ::ppp) ::p 1, ::pp 2}]
     (testing "graph with refsets"
@@ -273,9 +272,9 @@
   (testing "with failing composite refs"
     (reset! log [])
     (is (thrown-with-msg?
-          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-          #"^Invalid composite key: \[:integrant.core-test/a :b\]. Every keyword must be namespaced.$"
-          (ig/init {[::a :b] :anything}))))
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         #"^Invalid composite key: \[:integrant.core-test/a :b\]. Every keyword must be namespaced.$"
+         (ig/init {[::a :b] :anything}))))
 
   (testing "with custom resolve-key"
     (let [m (ig/init {::a (ig/ref ::r), ::r 1})]
