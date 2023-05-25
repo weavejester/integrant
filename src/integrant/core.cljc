@@ -177,7 +177,7 @@
 
 #?(:clj
    (defn- keyword->namespaces [kw]
-     (if-let [ns (namespace kw)]
+     (when-let [ns (namespace kw)]
        [(symbol ns)
         (symbol (str ns "." (name kw)))])))
 
@@ -341,7 +341,7 @@
   the value of the key is returned unaltered. This can be used to hide
   information that is only necessary to halt or suspend the key."
   {:arglists '([key value])}
-  (fn [key value] (normalize-key key)))
+  (fn [key _value] (normalize-key key)))
 
 (defmethod resolve-key :default [_ v] v)
 
@@ -355,7 +355,7 @@
   generally used to add in default values and references. By default the
   method returns the value unaltered."
   {:arglists '([key value])}
-  (fn [key value] (normalize-key key)))
+  (fn [key _value] (normalize-key key)))
 
 (defmethod prep-key :default [_ v] v)
 
@@ -363,7 +363,7 @@
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
   {:arglists '([key value])}
-  (fn [key value] (normalize-key key)))
+  (fn [key _value] (normalize-key key)))
 
 (defmulti halt-key!
   "Halt a running or suspended implementation associated with a key. This is
@@ -371,9 +371,9 @@
   database connection might be closed. This multimethod must be idempotent.
   The return value of this multimethod is discarded."
   {:arglists '([key value])}
-  (fn [key value] (normalize-key key)))
+  (fn [key _value] (normalize-key key)))
 
-(defmethod halt-key! :default [_ v])
+(defmethod halt-key! :default [_ _])
 
 (defmulti resume-key
   "Turn a config value associated with a key into a concrete implementation,
@@ -381,7 +381,7 @@
   implementation. By default this multimethod calls init-key and ignores the
   additional argument."
   {:arglists '([key value old-value old-impl])}
-  (fn [key value old-value old-impl] (normalize-key key)))
+  (fn [key _value _old-value _old-impl] (normalize-key key)))
 
 (defmethod resume-key :default [k v _ _]
   (init-key k v))
@@ -392,7 +392,7 @@
   but it may be customized to do things like keep a server running, but buffer
   incoming requests until the server is resumed."
   {:arglists '([key value])}
-  (fn [key value] (normalize-key key)))
+  (fn [key _value] (normalize-key key)))
 
 (defmethod suspend-key! :default [k v]
   (halt-key! k v))

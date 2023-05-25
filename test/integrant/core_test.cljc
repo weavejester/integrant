@@ -1,6 +1,5 @@
 (ns integrant.core-test
-  (:require [clojure.spec.alpha :as s]
-            #?(:clj  [clojure.test :refer :all]
+  (:require #?(:clj  [clojure.test :refer [are deftest is testing]]
                :cljs [cljs.test :refer-macros [are deftest is testing]])
             [integrant.core :as ig]
             [weavejester.dependency :as dep]))
@@ -373,10 +372,10 @@
 (deftest suspend-resume-test
   (testing "same configuration"
     (reset! log [])
-    (let [c  {::a (ig/ref ::b), ::b 1}
-          m  (ig/init c)
-          _  (ig/suspend! m)
-          m' (ig/resume c m)]
+    (let [c {::a (ig/ref ::b), ::b 1}
+          m (ig/init c)]
+      (ig/suspend! m)
+      (ig/resume c m)
       (is (= @log [[:init ::b 1]
                    [:init ::a [1]]
                    [:suspend ::a [[1]]]
@@ -386,10 +385,10 @@
 
   (testing "missing keys"
     (reset! log [])
-    (let [c  {::a (ig/ref ::b), ::b 1}
-          m  (ig/init c)
-          _  (ig/suspend! m)
-          m' (ig/resume (dissoc c ::a) m)]
+    (let [c {::a (ig/ref ::b), ::b 1}
+          m (ig/init c)]
+      (ig/suspend! m)
+      (ig/resume (dissoc c ::a) m)
       (is (= @log [[:init ::b 1]
                    [:init ::a [1]]
                    [:suspend ::a [[1]]]
@@ -399,10 +398,10 @@
 
   (testing "missing refs"
     (reset! log [])
-    (let [c  {::a {:b (ig/ref ::b)}, ::b 1}
-          m  (ig/init c)
-          _  (ig/suspend! m)
-          m' (ig/resume {::a []} m)]
+    (let [c {::a {:b (ig/ref ::b)}, ::b 1}
+          m (ig/init c)]
+      (ig/suspend! m)
+      (ig/resume {::a []} m)
       (is (= @log [[:init ::b 1]
                    [:init ::a {:b [1]}]
                    [:suspend ::a [{:b [1]}]]
@@ -419,10 +418,10 @@
 
   (testing "composite keys"
     (reset! log [])
-    (let [c  {::a (ig/ref ::x), [::b ::x] 1}
-          m  (ig/init c)
-          _  (ig/suspend! m)
-          m' (ig/resume c m)]
+    (let [c {::a (ig/ref ::x), [::b ::x] 1}
+          m (ig/init c)]
+      (ig/suspend! m)
+      (ig/resume c m)
       (is (= @log [[:init [::b ::x] 1]
                    [:init ::a :x]
                    [:suspend ::a [:x]]
@@ -432,10 +431,10 @@
 
   (testing "resume key with dependencies"
     (reset! log [])
-    (let [c  {::a {:b (ig/ref ::b)}, ::b 1}
-          m  (ig/init c [::a])
-          _  (ig/suspend! m)
-          m' (ig/resume c m [::a])]
+    (let [c {::a {:b (ig/ref ::b)}, ::b 1}
+          m (ig/init c [::a])]
+      (ig/suspend! m)
+      (ig/resume c m [::a])
       (is (= @log
              [[:init ::b 1]
               [:init ::a {:b [1]}]
