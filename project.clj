@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [weavejester/dependency "0.2.1"]]
   :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.10.597"]
-                                       [org.clojure/tools.reader "1.3.2"]]}}
+                                       [org.clojure/tools.reader "1.3.6"]]}}
   :plugins [[lein-codox "0.10.4"]
             [lein-doo "0.1.7"]]
   :codox
