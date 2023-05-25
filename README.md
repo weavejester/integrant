@@ -433,7 +433,7 @@ Integrant, as the same key will be used in the configuration, during
 initiation, and in the resulting system. All will likely have
 different values.
 
-To resolve this, Integrant has an `pre-init-spec` multimethod that can 
+To resolve this, Integrant has an `pre-init-spec` multimethod that can
 be extended to provide Integrant with a spec to test the value after
 the references are resolved, but before they are initiated. The
 resulting spec is checked directly before `init-key`, and an exception
@@ -449,7 +449,7 @@ Here's how our two example keys would be specced out:
 
 (defmethod ig/pre-init-spec :adapter/jetty [_]
   (s/keys :req-un [::port ::handler]))
-  
+
 (s/def ::name string?)
 
 (defmethod ig/pre-init-spec :handler/greet [_]
@@ -491,8 +491,8 @@ be returned from the function. Missing namespaces are ignored.
 
 ## Reloaded workflow
 
-See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to 
-use Integrant systems at the REPL, in line with Stuart Sierra's [reloaded 
+See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to
+use Integrant systems at the REPL, in line with Stuart Sierra's [reloaded
 workflow](http://thinkrelevance.com/blog/2013/06/04/clojure-workflow-reloaded).
 
 ## Further Documentation
