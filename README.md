@@ -1,6 +1,4 @@
-# Integrant
-
-[![Build Status](https://travis-ci.org/weavejester/integrant.svg?branch=master)](https://travis-ci.org/weavejester/integrant)
+# Integrant [![Build Status](https://github.com/weavejester/integrant/actions/workflows/test.yml/badge.svg)](https://github.com/weavejester/integrant/actions/workflows/test.yml)
 
 > integrant /ˈɪntɪɡr(ə)nt/
 >
