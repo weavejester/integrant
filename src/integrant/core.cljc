@@ -228,7 +228,8 @@
   (->> (keys config) (filter vector?) (remove composite-key?)))
 
 (defn- invalid-composite-key-exception [config key]
-  (ex-info (str "Invalid composite key: " key ". Every keyword must be namespaced.")
+  (ex-info (str "Invalid composite key: " key ". "
+                "Every keyword must be namespaced.")
            {:reason ::invalid-composite-key
             :config config
             :key key}))
@@ -329,7 +330,8 @@
      (when-let [invalid-key (first (invalid-composite-keys config))]
        (throw (invalid-composite-key-exception config invalid-key)))
      (when-let [ref (first (ambiguous-refs relevant-config))]
-       (throw (ambiguous-key-exception config ref (map key (find-derived config ref)))))
+       (throw (ambiguous-key-exception config ref
+                                       (map key (find-derived config ref)))))
      (when-let [refs (seq (missing-refs relevant-config))]
        (throw (missing-refs-exception config refs)))
      (reduce (partial build-key f assertf resolvef)
@@ -417,7 +419,8 @@
 (defn- assert-pre-init-spec [system key value]
   (when-let [spec (pre-init-spec key)]
     (when-not (s/valid? spec value)
-      (throw (spec-exception system key value spec (s/explain-data spec value))))))
+      (throw (spec-exception system key value spec
+                             (s/explain-data spec value))))))
 
 (defn prep
   "Prepare a config map for initiation. The prep-key method is applied to each
@@ -428,7 +431,8 @@
   ([config keys]
    {:pre [(map? config)]}
    (let [keyset (set keys)]
-     (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v))) {} config))))
+     (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
+                {} config))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency

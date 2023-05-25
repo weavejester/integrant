@@ -111,10 +111,11 @@
        (remove-lib 'integrant.test.bar)
        (remove-lib 'integrant.test.baz)
        (remove-lib 'integrant.test.quz)
-       (is (= (set (ig/load-namespaces {:integrant.test/foo                     1
-                                        :integrant.test.bar/wuz                 2
-                                        [:integrant.test/baz :integrant.test/x] 3
-                                        [:integrant.test/y :integrant.test/quz] 4}))
+       (is (= (set (ig/load-namespaces
+                    {:integrant.test/foo                     1
+                     :integrant.test.bar/wuz                 2
+                     [:integrant.test/baz :integrant.test/x] 3
+                     [:integrant.test/y :integrant.test/quz] 4}))
               '#{integrant.test.foo
                  integrant.test.bar
                  integrant.test.baz
@@ -272,7 +273,9 @@
     (reset! log [])
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         #"^Invalid composite key: \[:integrant.core-test/a :b\]. Every keyword must be namespaced.$"
+         (re-pattern (str "^Invalid composite key: "
+                          "\\[:integrant.core-test/a :b\\]. "
+                          "Every keyword must be namespaced.$"))
          (ig/init {[::a :b] :anything}))))
 
   (testing "with custom resolve-key"
@@ -317,7 +320,8 @@
   (testing "with failing composite specs"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (re-pattern (str "Spec failed on key \\[" ::n " " ::nnn "\\] when building system"))
+         (re-pattern (str "Spec failed on key \\[" ::n " " ::nnn "\\] "
+                          "when building system"))
          (ig/init {[::n ::nnn] 1.1})))))
 
 (deftest halt-test
@@ -468,7 +472,8 @@
 
 (defn build-log [config]
   (let [log (atom [])]
-    [(ig/build config (keys config) (fn [k v] (last (swap! log conj [:build k v]))))
+    [(ig/build config (keys config)
+               (fn [k v] (last (swap! log conj [:build k v]))))
      @log]))
 
 (deftest build-test
@@ -532,7 +537,8 @@
              (str "Error on key " ::error-halt " when running system")))
       (is (= (ex-data ex)
              {:reason         ::ig/run-threw-exception
-              :system         {::a [1], ::error-halt [[1]], ::b [[[1]]], ::c [[[[1]]]]}
+              :system         {::a [1], ::error-halt [[1]]
+                               ::b [[[1]]], ::c [[[[1]]]]}
               :completed-keys '(::c ::b)
               :remaining-keys '(::a)
               :function       ig/halt-key!
