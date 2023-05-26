@@ -39,8 +39,11 @@ initialized into a system.
 
 ## Installation
 
-To use the latest release, add the following to your project
-`:dependencies`:
+Add the following dependency to your deps.edn file:
+
+    integrant/integrant {:mvn/version "0.8.0"}
+
+Or this to your Leiningen dependencies:
 
     [integrant "0.8.0"]
 
