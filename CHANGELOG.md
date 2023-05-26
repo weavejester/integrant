@@ -1,3 +1,10 @@
+## 0.8.1 (2023-05-26)
+
+* Added `ref-resolve` method to `RefLife` protocol (#68)
+* Added ClojureScript support to `read-string` (#75)
+* Added `normalize-key` function to the public API (#76)
+* Improved error message for `ref` and `refset` (#70)
+
 ## 0.8.0 (2020-01-04)
 
 * Added check to ensure keys have namespaces
