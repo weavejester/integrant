@@ -14,10 +14,11 @@ jobs:
           java-version: '8'
 
       - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@10.1
+        uses: DeLaGuardo/setup-clojure@11.0
         with:
           lein: 2.9.10
           clj-kondo: 2023.05.18
+          cljfmt: 0.10.2
 
       - name: Cache clojure dependencies
         uses: actions/cache@v3
@@ -31,9 +32,6 @@ jobs:
 
       - name: Lint code
         run: clj-kondo --lint src test
-
-      - name: Install cljfmt
-        run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/weavejester/cljfmt/HEAD/install.sh)"
 
       - name: Check formatting
         run: cljfmt check
