@@ -4,7 +4,6 @@
                :cljs [clojure.tools.reader.edn :as edn])
             [clojure.walk :as walk]
             [clojure.set :as set]
-            [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [weavejester.dependency :as dep]))
 
@@ -399,28 +398,27 @@
 (defmethod suspend-key! :default [k v]
   (halt-key! k v))
 
-(defmulti pre-init-spec
-  "Return a spec for the supplied key that is used to check the associated
-  value before the key is initiated."
-  normalize-key)
+(defmulti assert-key
+  "Check that the value of a key is correct immediately before the key is
+  initiated. If the value is incorrect, an appropriate exception should
+  be thrown."
+  {:arglists '([key value])}
+  (fn [key _value] (normalize-key key)))
 
-(defmethod pre-init-spec :default [_] nil)
+(defmethod assert-key :default [_ _])
 
-(defn- spec-exception [system k v spec ed]
-  (ex-info (str "Spec failed on key " k " when building system\n"
-                (with-out-str (s/explain-out ed)))
+(defn- wrap-assert-exception [ex system key value]
+  (ex-info (str "Assertion failed on key " key " when building system")
            {:reason   ::build-failed-spec
             :system   system
-            :key      k
-            :value    v
-            :spec     spec
-            :explain  ed}))
+            :key      key
+            :value    value}
+           ex))
 
-(defn- assert-pre-init-spec [system key value]
-  (when-let [spec (pre-init-spec key)]
-    (when-not (s/valid? spec value)
-      (throw (spec-exception system key value spec
-                             (s/explain-data spec value))))))
+(defn- wrapped-assert-key [system key value]
+  (try (assert-key key value)
+       (catch #?(:clj Throwable :cljs :default) err
+         (throw (wrap-assert-exception err system key value)))))
 
 (defn prep
   "Prepare a config map for initiation. The prep-key method is applied to each
@@ -442,7 +440,7 @@
    (init config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (build config keys init-key assert-pre-init-spec resolve-key)))
+   (build config keys init-key wrapped-assert-key resolve-key)))
 
 (defn halt!
   "Halt a system map by applying halt-key! in reverse dependency order."
@@ -476,7 +474,7 @@
             (if (contains? system k)
               (resume-key k v (-> system meta ::build (get k)) (system k))
               (init-key k v)))
-          assert-pre-init-spec
+          wrapped-assert-key
           resolve-key)))
 
 (defn suspend!

@@ -23,7 +23,8 @@
 (defmethod ig/init-key ::k [_ v] v)
 
 (defmethod ig/init-key ::n [_ v] (inc v))
-(defmethod ig/pre-init-spec ::n [_] nat-int?)
+(defmethod ig/assert-key ::n [_ v]
+  (assert (nat-int? v) "should be a natural number"))
 
 (defmethod ig/init-key ::r [_ v] {:v v})
 (defmethod ig/resolve-key ::r [_ {:keys [v]}] v)
@@ -311,16 +312,17 @@
     (let [m (ig/init {::n (ig/ref ::k), ::k 1})]
       (is (= m {::n 2, ::k 1}))))
 
-  (testing "with failing specs"
+  (testing "with failing asserts"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (re-pattern (str "Spec failed on key " ::n " when building system"))
+         (re-pattern (str "Assertion failed on key " ::n
+                          " when building system"))
          (ig/init {::n (ig/ref ::k), ::k 1.1}))))
 
   (testing "with failing composite specs"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
-         (re-pattern (str "Spec failed on key \\[" ::n " " ::nnn "\\] "
+         (re-pattern (str "Assertion failed on key \\[" ::n " " ::nnn "\\] "
                           "when building system"))
          (ig/init {[::n ::nnn] 1.1})))))
 
