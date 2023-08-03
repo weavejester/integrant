@@ -233,7 +233,7 @@
             :config config
             :key key}))
 
-(defn- expand-key [config resolvef value]
+(defn- resolve-refs [config resolvef value]
   (walk/postwalk
    #(if (reflike? %) (ref-resolve % config resolvef) %)
    value))
@@ -306,7 +306,7 @@
          (throw (build-exception system f k v t)))))
 
 (defn- build-key [f assertf resolvef system [k v]]
-  (let [v' (expand-key system resolvef v)]
+  (let [v' (resolve-refs system resolvef v)]
     (assertf system k v')
     (-> system
         (assoc k (try-build-action system f k v'))
@@ -345,11 +345,6 @@
   (fn [key _value] (normalize-key key)))
 
 (defmethod resolve-key :default [_ v] v)
-
-(defn expand
-  "Replace all refs with the values they correspond to."
-  [config]
-  (build config (keys config) (fn [_ v] v) (fn [_ _ _]) resolve-key))
 
 (defmulti prep-key
   "Prepare the configuration associated with a key for initiation. This is

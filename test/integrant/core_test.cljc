@@ -76,18 +76,6 @@
   (is (ig/valid-config-key? ::a))
   (is (not (ig/valid-config-key? :a))))
 
-(deftest expand-test
-  (is (= (ig/expand {::a (ig/ref ::b), ::b 1})
-         {::a 1, ::b 1}))
-  (is (= (ig/expand {::a (ig/ref ::b), ::b (ig/ref ::c), ::c 2})
-         {::a 2, ::b 2, ::c 2}))
-  (is (= (ig/expand {::a (ig/ref ::pp), ::p 1})
-         {::a 1, ::p 1}))
-  (is (= (ig/expand {::a (ig/refset ::ppp), ::p 1, ::pp 2})
-         {::a #{1 2}, ::p 1, ::pp 2}))
-  (is (= (ig/expand {::a (ig/refset ::ppp)})
-         {::a #{}})))
-
 #?(:clj
    (deftest read-string-test
      (is (= (ig/read-string "{:foo/a #ig/ref :foo/b, :foo/b 1}")
