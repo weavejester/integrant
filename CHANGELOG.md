@@ -1,3 +1,10 @@
+## 0.9.0-alpha1 (2023-08-04)
+
+* **BREAKING CHANGE:** removed `pre-init-spec`
+* **BREAKING CHANGE:** removed old `expand` function
+* Added `assert-key` to replace `pre-init-spec`
+* Added `expand-key` and new `expand` function (#102)
+
 ## 0.8.1 (2023-05-26)
 
 * Added `ref-resolve` method to `RefLife` protocol (#68)
