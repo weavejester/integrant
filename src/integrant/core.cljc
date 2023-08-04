@@ -355,6 +355,14 @@
 
 (defmethod prep-key :default [_ v] v)
 
+(defmulti expand-key
+  "Expand a config value into a map that is then merged back into the config.
+  Defaults to returning a map `{key value}`. See: [[expand]]."
+  {:arglists '([key value])}
+  (fn [key _value] (normalize-key key)))
+
+(defmethod expand-key :default [k v] {k v})
+
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
@@ -427,10 +435,61 @@
      (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
                 {} config))))
 
+(defn- expansions [[k v]]
+  (mapcat (fn [[k1 v1]]
+            (if (map? v1)
+              (map (fn [[k2 v2]] {:key k, :index [k1 k2], :value v2}) v1)
+              (list {:key k, :index [k1], :value v1})))
+          (expand-key k v)))
+
+(defn- override-expansion? [{key :key, [i0] :index}]
+  (= key i0))
+
+(defn- conflicting-expansions [expansions]
+  (->> expansions
+       (group-by :index)
+       (vals)
+       (filter #(> (count %) 1))))
+
+(defn- conflicting-expands-exception [config expansions]
+  (let [index (-> expansions first :index)
+        keys  (map :key expansions)]
+    (ex-info (str "Conflicting index " index " for expansions: "
+                  (str/join ", " keys))
+             {:reason ::conflicting-expands
+              :config config
+              :conflicting-index index
+              :expand-keys keys})))
+
+(defn- apply-expansion [config {:keys [index value]}]
+  (assoc-in config index value))
+
+(defn expand
+  "Expand modules in the config map prior to initiation. The expand-key method
+  is applied to each entry in the map, and the results merged together to
+  produce a new configuration.
+
+  When merging, values that are maps will also be merged. Conflicts between
+  keys will generate an error, except when the key matches the expansion key;
+  in that case, the value will be overwritten instead."
+  ([config]
+   (expand config (keys config)))
+  ([config keys]
+   {:pre [(map? config)]}
+   (let [expansions    (mapcat expansions (select-keys config keys))
+         overrides     (filter override-expansion? expansions)
+         override-idxs (set (map :index overrides))
+         non-overrides (remove (comp override-idxs :index) expansions)]
+     (when-let [conflict (first (conflicting-expansions non-overrides))]
+       (throw (conflicting-expands-exception config conflict)))
+     (reduce apply-expansion
+             (apply dissoc config keys)
+             (concat non-overrides overrides)))))
+
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
   order, initiated via the init-key multimethod, then the refs associated with
-  the key are expanded."
+  the key are resolved."
   ([config]
    (init config (keys config)))
   ([config keys]
@@ -458,7 +517,7 @@
   "Turn a config map into a system map, reusing resources from an existing
   system when it's possible to do so. Keys are traversed in dependency order,
   resumed with the resume-key multimethod, then the refs associated with the
-  key are expanded."
+  key are resolved."
   ([config system]
    (resume config system (keys config)))
   ([config system keys]

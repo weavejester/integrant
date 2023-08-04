@@ -9,6 +9,10 @@
 (defmethod ig/prep-key ::p [_ v]
   (merge {:a (ig/ref ::a)} v))
 
+(defmethod ig/expand-key ::mod   [_ v] {::a v, ::b {:v v}})
+(defmethod ig/expand-key ::mod-a [_ v] {::a v})
+(defmethod ig/expand-key ::mod-b [_ v] {::b {:v v}})
+
 (defmethod ig/init-key :default [k v]
   (swap! log conj [:init k v])
   [v])
@@ -217,6 +221,41 @@
   (testing "prep then init"
     (is (= (ig/init (ig/prep {::p {:b 2}, ::a 1}))
            {::p [{:a [1], :b 2}], ::a [1]}))))
+
+(deftest expand-test
+  (testing "single expand"
+    (is (= (ig/expand {::mod 1})
+           {::a 1, ::b {:v 1}})))
+  (testing "expand with unrelated keys"
+    (is (= (ig/expand {::mod 1, ::b {:x 1}, ::c 2})
+           {::a 1, ::b {:v 1, :x 1}, ::c 2})))
+  (testing "expand with direct override"
+    (is (= (ig/expand {::mod 1, ::a 2})
+           {::a 2, ::b {:v 1}})))
+  (testing "expand with nested override"
+    (is (= (ig/expand {::mod 1, ::b {:v 2}})
+           {::a 1, ::b {:v 2}})))
+  (testing "unresolved conflicting index"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "^Conflicting index \\[:integrant\\.core-test/a\\] "
+                          "for expansions: :integrant\\.core-test/mod, "
+                          ":integrant\\.core-test/mod-a$"))
+         (ig/expand {::mod 1, ::mod-a 2}))))
+  (testing "unresolved conflicting nested index"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "^Conflicting index "
+                          "\\[:integrant\\.core-test/b :v\\] "
+                          "for expansions: :integrant\\.core-test/mod, "
+                          ":integrant\\.core-test/mod-b$"))
+         (ig/expand {::mod 1, ::mod-b 2}))))
+  (testing "resolved conflict"
+    (is (= (ig/expand {::mod 1, ::mod-a 2, ::a 3})
+           {::a 3, ::b {:v 1}})))
+  (testing "resolved nested conflict"
+    (is (= (ig/expand {::mod 1, ::mod-b 2, ::b {:v 3}})
+           {::a 1, ::b {:v 3}}))))
 
 (deftest init-test
   (testing "without keys"
