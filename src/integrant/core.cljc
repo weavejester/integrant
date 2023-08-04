@@ -436,11 +436,12 @@
                 {} config))))
 
 (defn- expansions [[k v]]
-  (mapcat (fn [[k1 v1]]
-            (if (map? v1)
-              (map (fn [[k2 v2]] {:key k, :index [k1 k2], :value v2}) v1)
-              (list {:key k, :index [k1], :value v1})))
-          (expand-key k v)))
+  (letfn [(generate-expansions [idx [kn vn]]
+            (if (map? vn)
+              (mapcat #(generate-expansions (conj idx kn) %) vn)
+              (list {:key k, :index (conj idx kn), :value vn})))]
+    (mapcat #(generate-expansions [] %)
+            (expand-key k v))))
 
 (defn- override-expansion? [{key :key, [i0] :index}]
   (= key i0))
@@ -469,8 +470,8 @@
   is applied to each entry in the map, and the results merged together to
   produce a new configuration.
 
-  When merging, values that are maps will also be merged. Conflicts between
-  keys will generate an error, except when the key matches the expansion key;
+  When merging, nested maps will also be merged. Conflicts between merged keys
+  will generate an error, except when the config key matches the expansion key;
   in that case, the value will be overwritten instead."
   ([config]
    (expand config (keys config)))

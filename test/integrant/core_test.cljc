@@ -12,6 +12,7 @@
 (defmethod ig/expand-key ::mod   [_ v] {::a v, ::b {:v v}})
 (defmethod ig/expand-key ::mod-a [_ v] {::a v})
 (defmethod ig/expand-key ::mod-b [_ v] {::b {:v v}})
+(defmethod ig/expand-key ::mod-c [_ v] {::c {:x {:y {:z v}}}})
 
 (defmethod ig/init-key :default [k v]
   (swap! log conj [:init k v])
@@ -234,7 +235,9 @@
            {::a 2, ::b {:v 1}})))
   (testing "expand with nested override"
     (is (= (ig/expand {::mod 1, ::b {:v 2}})
-           {::a 1, ::b {:v 2}})))
+           {::a 1, ::b {:v 2}}))
+    (is (= (ig/expand {::mod-c 1, ::c {:x {:y {:z 2}}}})
+           {::c {:x {:y {:z 2}}}})))
   (testing "unresolved conflicting index"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
@@ -255,7 +258,11 @@
            {::a 3, ::b {:v 1}})))
   (testing "resolved nested conflict"
     (is (= (ig/expand {::mod 1, ::mod-b 2, ::b {:v 3}})
-           {::a 1, ::b {:v 3}}))))
+           {::a 1, ::b {:v 3}}))
+    (is (= (ig/expand {[::one ::mod-c] 1
+                       [::two ::mod-c] 2
+                       ::c {:x {:y {:z 3}}}})
+           {::c {:x {:y {:z 3}}}}))))
 
 (deftest init-test
   (testing "without keys"
