@@ -19,6 +19,7 @@ jobs:
           lein: 2.9.10
           clj-kondo: 2023.05.18
           cljfmt: 0.10.2
+          bb: latest
 
       - name: Cache clojure dependencies
         uses: actions/cache@v3
@@ -29,6 +30,9 @@ jobs:
 
       - name: Run tests
         run: lein test-all
+
+      - name: Run bb tests
+        run: bb test:bb
 
       - name: Lint code
         run: clj-kondo --lint src test

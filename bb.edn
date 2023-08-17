@@ -1,0 +1,5 @@
+{:deps {integrant/integrant {:local/root "."}}
+ :tasks {test:bb {:extra-paths ["test"]
+                  :extra-deps {io.github.cognitect-labs/test-runner
+                               {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+                  :task cognitect.test-runner/-main}}}
