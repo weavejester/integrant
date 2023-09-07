@@ -209,7 +209,7 @@
 
 #?(:clj
    (defn- resources [path]
-     (let [cl (.. Thread currentThread getContextClassLoader)]
+     (let [cl (clojure.lang.RT/baseLoader)]
        (enumeration-seq (.getResources cl path)))))
 
 #?(:clj
