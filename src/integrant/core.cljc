@@ -195,9 +195,9 @@
    (defn load-namespaces
      "Attempt to load the namespaces referenced by the keys in a configuration.
      If a key is namespaced, both the namespace and the namespace concatenated
-     with the name will be tried. For example, if a key is :foo.bar/baz, then the
-     function will attempt to load the namespaces foo.bar and foo.bar.baz. Upon
-     completion, a list of all loaded namespaces will be returned."
+     with the name will be tried. For example, if a key is :foo.bar/baz, then
+     the function will attempt to load the namespaces foo.bar and foo.bar.baz.
+     Upon completion, a list of all loaded namespaces will be returned."
      ([config]
       (load-namespaces config (keys config)))
      ([config keys]
@@ -440,10 +440,10 @@
 
 (defn- wrap-assert-exception [ex system key value]
   (ex-info (str "Assertion failed on key " key " when building system")
-           {:reason   ::build-failed-spec
-            :system   system
-            :key      key
-            :value    value}
+           {:reason  ::build-failed-spec
+            :system  system
+            :key     key
+            :value   value}
            ex))
 
 (defn- wrapped-assert-key [system key value]
@@ -488,10 +488,10 @@
     (ex-info (str "Conflicting values at index " index " for expansions: "
                   (str/join ", " keys) ". Use the ^:override metadata to "
                   "set the preferred value.")
-             {:reason ::conflicting-expands
-              :config config
+             {:reason            ::conflicting-expands
+              :config            config
               :conflicting-index index
-              :expand-keys keys})))
+              :expand-keys       keys})))
 
 (defn- apply-expansion [config {:keys [index value]}]
   (assoc-in config index value))
