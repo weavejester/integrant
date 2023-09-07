@@ -99,6 +99,16 @@
 (derive :integrant.test-child/foo :integrant.test/foo)
 
 #?(:clj
+   (deftest load-hierarchy-test
+     (try
+       (ig/load-hierarchy)
+       (is (isa? :example/child :example/father))
+       (is (isa? :example/child :example/mother))
+       (finally
+         (underive :example/child :example/father)
+         (underive :example/child :example/mother)))))
+
+#?(:clj
    (deftest load-namespaces-test
      (testing "all namespaces"
        (remove-lib 'integrant.test.foo)

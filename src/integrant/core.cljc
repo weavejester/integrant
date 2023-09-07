@@ -207,6 +207,34 @@
                   (distinct)
                   (keep try-require))))))
 
+#?(:clj
+   (defn- resources [path]
+     (let [cl (.. Thread currentThread getContextClassLoader)]
+       (enumeration-seq (.getResources cl path)))))
+
+#?(:clj
+   (defn load-hierarchy
+     "Search the base classpath for all resources that share the same
+     path (by default `integrant/hierarchy.edn`), and use their contents
+     to extend the global `derive` hierarchy. This allows a hierarchy to be
+     constructed without needing to load every namespace.
+
+     The hierarchy resources should be edn files that map child keywords
+     to vectors of parents. For example:
+
+         {:example/child [:example/father :example/mother]}
+
+     This is equivalent:
+
+         (derive :example/child :example/father)
+         (derive :example/child :example/mother)"
+     ([] (load-hierarchy "integrant/hierarchy.edn"))
+     ([path]
+      (doseq [url (resources path)]
+        (let [hierarchy (edn/read-string (slurp url))]
+          (doseq [[tag parents] hierarchy, parent parents]
+            (derive tag parent)))))))
+
 (defn- missing-refs-exception [config refs]
   (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
            {:reason ::missing-refs
