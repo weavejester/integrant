@@ -436,15 +436,17 @@
                 {} config))))
 
 (defn- expansions [[k v]]
-  (letfn [(generate-expansions [idx [kn vn]]
-            (if (map? vn)
-              (mapcat #(generate-expansions (conj idx kn) %) vn)
-              (list {:key k, :index (conj idx kn), :value vn})))]
-    (mapcat #(generate-expansions [] %)
-            (expand-key k v))))
-
-(defn- override-expansion? [{key :key, [i0] :index}]
-  (= key i0))
+  (let [m         (expand-key k v)
+        override? (:override (meta m))]
+    (letfn [(gen-expansions [idx [kn vn] override?]
+              (if (map? vn)
+                (let [override? (or override? (:override (meta vn)))]
+                  (mapcat #(gen-expansions (conj idx kn) % override?) vn))
+                (list {:key       k
+                       :index     (conj idx kn)
+                       :value     vn
+                       :override? override?})))]
+      (mapcat #(gen-expansions [] % override?) m))))
 
 (defn- conflicting-expansions [expansions]
   (->> expansions
@@ -455,8 +457,9 @@
 (defn- conflicting-expands-exception [config expansions]
   (let [index (-> expansions first :index)
         keys  (map :key expansions)]
-    (ex-info (str "Conflicting index " index " for expansions: "
-                  (str/join ", " keys))
+    (ex-info (str "Conflicting values at index " index " for expansions: "
+                  (str/join ", " keys) ". Use the ^:override metadata to "
+                  "set the preferred value.")
              {:reason ::conflicting-expands
               :config config
               :conflicting-index index
@@ -467,18 +470,18 @@
 
 (defn expand
   "Expand modules in the config map prior to initiation. The expand-key method
-  is applied to each entry in the map, and the results merged together to
+  is applied to each entry in the map, and the results deep-merged together to
   produce a new configuration.
 
-  When merging, nested maps will also be merged. Conflicts between merged keys
-  will generate an error, except when the config key matches the expansion key;
-  in that case, the value will be overwritten instead."
+  If there are conflicting keys with different values, an exception will be
+  raised. Conflicts can be resolved by tagging one value with the :override
+  metadata key."
   ([config]
    (expand config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
    (let [expansions    (mapcat expansions (select-keys config keys))
-         overrides     (filter override-expansion? expansions)
+         overrides     (filter :override? expansions)
          override-idxs (set (map :index overrides))
          non-overrides (remove (comp override-idxs :index) expansions)]
      (when-let [conflict (first (conflicting-expansions non-overrides))]
