@@ -1,3 +1,8 @@
+## 0.9.0-alpha2 (2023-09-08)
+
+* Changed expand overrides to need `^:override` metadata
+* Added `load-hierarchy` function
+
 ## 0.9.0-alpha1 (2023-08-04)
 
 * **BREAKING CHANGE:** removed `pre-init-spec`
