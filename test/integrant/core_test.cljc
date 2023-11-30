@@ -13,6 +13,7 @@
 (defmethod ig/expand-key ::mod-a [_ v] {::a v})
 (defmethod ig/expand-key ::mod-b [_ v] {::b {:v v}})
 (defmethod ig/expand-key ::mod-c [_ v] {::c {:x {:y {:z v}}}})
+(defmethod ig/expand-key ::mod-z [_ v] {::z v})
 
 (defmethod ig/init-key :default [k v]
   (swap! log conj [:init k v])
@@ -234,6 +235,16 @@
            {::p [{:a [1], :b 2}], ::a [1]}))))
 
 (deftest expand-test
+  (testing "default expand"
+    (is (= (ig/expand {::unique 1})
+           {::unique 1})))
+  (testing "empty map values"
+    (is (= (ig/expand {::unique {}})
+           {::unique {}}))
+    (is (= (ig/expand {::a {}, ::mod-a {:x 1}})
+           {::a {:x 1}}))
+    (is (= (ig/expand {::z {}, ::mod-z {:x 1}})
+           {::z {:x 1}})))
   (testing "single expand"
     (is (= (ig/expand {::mod 1})
            {::a 1, ::b {:v 1}})))
