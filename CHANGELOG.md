@@ -1,3 +1,7 @@
+## 0.9.0-alpha3 (2023-11-30)
+
+* Fixed bug expanding keys with empty map values
+
 ## 0.9.0-alpha2 (2023-09-08)
 
 * Changed expand overrides to need `^:override` metadata
