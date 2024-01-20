@@ -288,7 +288,12 @@
     (is (= (ig/expand {[::one ::mod-c] 1
                        [::two ::mod-c] 2
                        ::c ^:override {:x {:y {:z 3}}}})
-           {::c {:x {:y {:z 3}}}}))))
+           {::c {:x {:y {:z 3}}}})))
+  (testing "expand with refs"
+    (let [m {::a (ig/ref ::b) ::b 1}]
+      (is (= m (ig/expand m))))
+    (let [m {::a (ig/refset ::b) ::b 1}]
+      (is (= m (ig/expand m))))))
 
 (deftest init-test
   (testing "without keys"

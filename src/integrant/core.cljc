@@ -467,7 +467,7 @@
   (let [m         (expand-key k v)
         override? (:override (meta m))]
     (letfn [(gen-expansions [idx [kn vn] override?]
-              (if (and (map? vn) (seq vn))
+              (if (and (map? vn) (not (reflike? vn)) (seq vn))
                 (let [override? (or override? (:override (meta vn)))]
                   (mapcat #(gen-expansions (conj idx kn) % override?) vn))
                 (list {:key       k
