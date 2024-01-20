@@ -1,3 +1,7 @@
+## 0.9.0-alpha4 (2024-01-20)
+
+* Fixed bug that erroneously expanded reflikes (#107)
+
 ## 0.9.0-alpha3 (2023-11-30)
 
 * Fixed bug expanding keys with empty map values
