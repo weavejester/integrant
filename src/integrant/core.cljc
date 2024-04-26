@@ -473,7 +473,7 @@
                 (list {:key       k
                        :index     (conj idx kn)
                        :value     vn
-                       :override? override?})))]
+                       :override? (and override? (not (map? vn)))})))]
       (mapcat #(gen-expansions [] % override?) m))))
 
 (defn- conflicting-expansions [expansions]
