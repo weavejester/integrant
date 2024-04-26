@@ -389,7 +389,7 @@
   {:arglists '([key value])}
   (fn [key _value] (normalize-key key)))
 
-(defmethod expand-key :default [k v] {k v})
+(defmethod expand-key :default [k v] ^:override {k v})
 
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.

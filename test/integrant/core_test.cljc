@@ -255,10 +255,13 @@
     (is (= (ig/expand {::mod {:x 1}, ::a ^:override {:x 2}})
            {::a {:x 2}, ::b {:v {:x 1}}})))
   (testing "expand with nested override"
-    (is (= (ig/expand {::mod 1, ::b ^:override {:v 2}})
-           {::a 1, ::b {:v 2}}))
+    (is (= (ig/expand {::mod {:x 1, :y 1}, ::mod-a ^:override {:y 2}})
+           {::a {:x 1, :y 2}, ::b {:v {:x 1, :y 1}}}))
     (is (= (ig/expand {::mod-c 1, ::c ^:override {:x {:y {:z 2}}}})
            {::c {:x {:y {:z 2}}}})))
+  (testing "expand with default override"
+    (is (= (ig/expand {::mod 1, ::a 2}) {::a 2, ::b {:v 1}}))
+    (is (= (ig/expand {::mod 1, ::b {:v 2}}) {::a 1, ::b {:v 2}})))
   (testing "unresolved conflicting index"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
