@@ -273,32 +273,73 @@ Before a reference is resolved, `resolve-key` is applied. This allows
 us to cut out information that is only relevant behind the scenes. In
 this case, we replace the map with the container Jetty server object.
 
-### Prepping
+### Expanding
 
-Sometimes keys also require some preparation. Perhaps you have a
-particularly complex set of default values, or perhaps you want to add
-in default references to other keys. In these cases, the `prep-key`
-method can help.
+Before being initiated, keys can be *expanded*. Expansions can be
+thought of as the equivalent of macros in normal Clojure code.
 
-```clojure
-(defmethod ig/prep-key :adapter/jetty [_ config]
-  (merge {:port 8080} config))
-```
-
-The `prep-key` method will change the value of a key *before* the
-configuration is initialized. In the previous example, the `:port`
-would default to `8080` if not set.
-
-All keys in a configuration can be prepped using the `prep` function
-before the `init` function:
+An expansion is defined via the `expand-key` method. When `expand` is
+called on a configuration map, `expand-key` is called on every key/value
+pair, and then the results deep-merged into a new map. The default
+expansion is the identity expansion:
 
 ```clojure
-(-> config ig/prep ig/init)
+(defmethod ig/expand-key :default [key value]
+  ^:override {key value})
 ```
 
-If `prep-key` is not defined, it defaults to the identity
-function. Prepping keys is particularly useful when adding default
-references to derived keywords.
+Integrant will raise an error if two expansions set the same key to
+conflicting values. The `:override` metadata tag can be applied to
+indicate one value should be preferred and override conflicts. As
+seen above, the default expansion always has an override. Libraries
+should avoid the use of overrides in general.
+
+Expansions can be used to abstract groups of keys. For example:
+
+```clojure
+(defmethod ig/expand-key :module/greet [_ {:keys [name]}]
+  {:adapter/jetty {:port 8080, :handler (ig/ref :handler/greet)}
+   :handler/greet {:name name}})
+```
+
+This would be used in a configuration in the following way:
+
+```edn
+{:module/greet {:name "Alice"}}
+```
+
+And would expand to:
+
+```edn
+{:adapter/jetty {:port 8080, :handler #ig/ref :handler/greet}
+ :handler/greet {:name "Alice"}}
+```
+
+This allows for commonly used configurations to be abstracted out into
+reusable modules, while still allowing the expansion to be inspected and
+modified. For example:
+
+```edn
+{:module/greet {:name "Alice"}
+ :adapter/jetty {:port 3000}}
+```
+
+The port set via `:adapter/jetty` will override the port set when
+`:module/greet` is expanded:
+
+```edn
+{:adapter/jetty {:port 3000, :handler #ig/ref :handler/greet}
+ :handler/greet {:name "Alice"}}
+```
+
+To use expansions, the `integrant.core/expand` function needs to be
+called before the configuration is initiated:
+
+```clojure
+(-> config ig/expand ig/init)
+```
+
+Expansions supplant the now deprecated `prep` and `prep-key`.
 
 ### Derived keywords
 
