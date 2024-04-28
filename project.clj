@@ -8,7 +8,8 @@
   :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.10.597"]
                                        [org.clojure/tools.reader "1.3.6"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.3"]]}
-             :1.11 {:dependencies [[org.clojure/clojure "1.11.1"]]}}
+             :1.11 {:dependencies [[org.clojure/clojure "1.11.3"]]}
+             :1.12 {:dependencies [[org.clojure/clojure "1.12.0-alpha9"]]}}
   :plugins [[lein-codox "0.10.4"]
             [lein-doo "0.1.7"]]
   :codox
@@ -33,7 +34,7 @@
   :aliases {"test-nashorn" ["doo" "nashorn" "test-nashorn" "once"]
             "test-node"    ["doo" "node" "test-node" "once"]
             "test-cljs"    ["do" ["test-nashorn"] ["test-node"]]
-            "test-clj"     ["with-profile" "default:+1.10:+1.11"
+            "test-clj"     ["with-profile" "default:+1.10:+1.11:+1.12"
                             "test" ":only" "integrant.core-test"]
             "test-all"     ["do" ["test-clj"] ["test-cljs"]]
             "test"         ["test" ":only" "integrant.core-test"]})
