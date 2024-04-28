@@ -378,7 +378,7 @@
   "Prepare the configuration associated with a key for initiation. This is
   generally used to add in default values and references. By default the
   method returns the value unaltered."
-  {:arglists '([key value])}
+  {:deprecated "0.9.0", :arglists '([key value])}
   (fn [key _value] (normalize-key key)))
 
 (defmethod prep-key :default [_ v] v)
@@ -455,6 +455,7 @@
   "Prepare a config map for initiation. The prep-key method is applied to each
   entry in the map, and the values replaced with the return value. This is used
   for adding default values and references to the configuration."
+  {:deprecated "0.9.0"}
   ([config]
    (prep config (keys config)))
   ([config keys]
