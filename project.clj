@@ -5,13 +5,13 @@
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [weavejester/dependency "0.2.1"]]
-  :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
+  :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.10.597"]
                                        [org.clojure/tools.reader "1.4.2"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.3"]]}
              :1.11 {:dependencies [[org.clojure/clojure "1.11.3"]]}
              :1.12 {:dependencies [[org.clojure/clojure "1.12.0-alpha9"]]}}
   :plugins [[lein-codox "0.10.8"]
-            [lein-doo "0.1.7"]]
+            [lein-doo "0.1.11"]]
   :codox
   {:output-path "codox"
    :source-uri "http://github.com/weavejester/integrant/blob/{version}/{filepath}#L{line}"}
