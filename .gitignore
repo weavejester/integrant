@@ -11,3 +11,4 @@ pom.xml.asc
 .hg/
 /codox
 /.cpcache
+/.clj-kondo/*/

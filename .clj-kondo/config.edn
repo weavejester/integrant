@@ -1,0 +1,7 @@
+{:linters
+ {:deprecated-var
+  {:exclude
+   {integrant.core/prep-key
+    {:namespaces [integrant.core integrant.core-test]}
+    integrant.core/prep
+    {:namespaces [integrant.core integrant.core-test]}}}}}
