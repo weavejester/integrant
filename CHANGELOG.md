@@ -1,3 +1,9 @@
+## 0.9.0 (2024-04-29)
+
+* Updated default `expand-key` to have `:override` metadata
+* Deprecated `prep` and `prep-key`
+* Fixed bug in overriding empty maps
+
 ## 0.9.0-alpha4 (2024-01-20)
 
 * Fixed bug that erroneously expanded reflikes (#107)
