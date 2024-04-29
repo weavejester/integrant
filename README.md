@@ -470,47 +470,34 @@ values.
   (fn [_] (resp/response (str "Hello " (clojure.string/join ", " names))))
 ```
 
-### Specs
+### Asserting
 
-It would be incorrect to write specs directly against the keys used by
-Integrant, as the same key will be used in the configuration, during
-initiation, and in the resulting system. All will likely have
-different values.
-
-To resolve this, Integrant has an `pre-init-spec` multimethod that can
-be extended to provide Integrant with a spec to test the value after
-the references are resolved, but before they are initiated. The
-resulting spec is checked directly before `init-key`, and an exception
-is raised if it fails.
-
-Here's how our two example keys would be specced out:
+It's often useful to add assertions to ensure that the system has been
+initiated correctly. This can be done via `assert-key`:
 
 ```clojure
-(require '[clojure.spec.alpha :as s])
-
-(s/def ::port pos-int?)
-(s/def ::handler fn?)
-
-(defmethod ig/pre-init-spec :adapter/jetty [_]
-  (s/keys :req-un [::port ::handler]))
-
-(s/def ::name string?)
-
-(defmethod ig/pre-init-spec :handler/greet [_]
-  (s/keys :req-un [::name]))
+(defmethod ig/assert-key :adapter/jetty [_ {:keys [port]}]
+  (assert (nat-int? port) ":port should be a valid port number"))
 ```
 
-If we try to `init` an invalid configuration:
-
-```clojure
-(ig/init {:adapter/jetty {:port 3000} :handler/greet {:name "foo"}})
-```
-
-Then an `ExceptionInfo` is thrown explaining the error:
+If we try to `init` an invalid configuration, then an `AssertionError`
+is thrown explaining the error:
 
 ```
-ExceptionInfo Spec failed on key :adapter/jetty when building system
-val: {:port 3000} fails predicate: (contains? % :handler)
+user=> (ig/init {:adapter/jetty {:port "3000"}})
+AssertionError Assert failed: :port should be a valid port number
+(nat-int? port)  user/eval3088/fn--3090 (form-init14815382800832764134.clj:2
+```
+
+This error is wrapped in an `clojure.lang.ExceptionInfo` that contains
+additional information:
+
+```
+user=> (ex-data *e)
+{:reason :integrant.core/build-failed-spec
+ :system {}
+ :key    :adapter/jetty
+ :value  {:port "3000"}}
 ```
 
 ### Loading namespaces
