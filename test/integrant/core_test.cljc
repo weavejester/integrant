@@ -15,13 +15,19 @@
 (defmethod ig/expand-key ::mod-c [_ v] {::c {:x {:y {:z v}}}})
 (defmethod ig/expand-key ::mod-z [_ v] {::z v})
 
-(defmethod ig/init-key :default [k v]
+(defmethod ig/init-key ::default [k v]
   (swap! log conj [:init k v])
   [v])
+
+(doseq [k [::a ::b ::c ::pp :a/a1 :a/a2 :a/a3 :a/a4 :a/a5 :a/a6
+           :a/a7 :a/a8 :a/a9 :a/a10 ::error-halt]]
+  (derive k ::default))
 
 (defmethod ig/init-key ::x [k v]
   (swap! log conj [:init k v])
   :x)
+
+(prefer-method ig/init-key ::x ::default)
 
 (defmethod ig/init-key ::error-init [_ _]
   (throw (ex-info "Testing" {:reason ::test})))
@@ -58,6 +64,9 @@
 
 (derive ::ap ::a)
 (derive ::ap ::p)
+
+(defn- init-example [v]
+  (str "init" v))
 
 (deftest ref-test
   (is (ig/ref? (ig/ref ::foo)))
@@ -392,7 +401,17 @@
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "Assertion failed on key \\[" ::n " " ::nnn "\\] "
                           "when building system"))
-         (ig/init {[::n ::nnn] 1.1})))))
+         (ig/init {[::n ::nnn] 1.1}))))
+
+  #?(:clj
+     (testing "default functions"
+       (is (= (ig/init {::init-example "foo"})
+              {::init-example "initfoo"}))
+       (is (thrown-with-msg?
+            clojure.lang.ExceptionInfo
+            (re-pattern (str "Error on key " ::init-examplo
+                             " when building system"))
+            (ig/init {::init-examplo "foo"}))))))
 
 (deftest halt-test
   (testing "without keys"

@@ -397,6 +397,17 @@
   {:arglists '([key value])}
   (fn [key _value] (normalize-key key)))
 
+#?(:clj
+   (defmethod init-key :default [k v]
+     (let [sym (symbol (namespace k) (name k))]
+       (if-some [var (find-var sym)]
+         ((var-get var) v)
+         (throw (ex-info
+                 (str "Unable to find an init-key method or function for " k)
+                 {:reason ::missing-init-key
+                  :key    k
+                  :value  v}))))))
+
 (defmulti halt-key!
   "Halt a running or suspended implementation associated with a key. This is
   often used for stopping processes or cleaning up resources. For example, a
