@@ -65,6 +65,7 @@
 (derive ::ap ::a)
 (derive ::ap ::p)
 
+#_{:clj-kondo/ignore [:unused-private-var]}
 (defn- init-example [v]
   (str "init" v))
 
