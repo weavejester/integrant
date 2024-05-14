@@ -475,29 +475,31 @@
      (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
                 {} config))))
 
-(defn- expansions [[k v]]
-  (let [m         (expand-key k v)
-        override? (:override (meta m))]
-    (letfn [(gen-expansions [idx [kn vn] override?]
+(defn- converge-values [[k v]]
+  (let [override? (:override (meta v))]
+    (letfn [(gen-converges [idx [kn vn] override?]
               (if (and (map? vn) (not (reflike? vn)) (seq vn))
                 (let [override? (or override? (:override (meta vn)))]
-                  (mapcat #(gen-expansions (conj idx kn) % override?) vn))
+                  (mapcat #(gen-converges (conj idx kn) % override?) vn))
                 (list {:key       k
                        :index     (conj idx kn)
                        :value     vn
                        :override? (and override? (not (map? vn)))})))]
-      (mapcat #(gen-expansions [] % override?) m))))
+      (mapcat #(gen-converges [] % override?) v))))
 
-(defn- conflicting-expansions [expansions]
-  (->> expansions
-       (group-by :index)
-       (vals)
-       (filter #(> (count %) 1))))
+(defn- one-element? [coll]
+  (and (seq coll) (nil? (next coll))))
 
-(defn- conflicting-expands-exception [config expansions]
+(defn- converge-conflicts [converges]
+  (filter (fn [conflicts]
+            (and (next conflicts)
+                 (not (one-element? (filter :override? conflicts)))))
+          (vals (group-by :index converges))))
+
+(defn- converge-conflict-exception [config expansions]
   (let [index (-> expansions first :index)
         keys  (map :key expansions)]
-    (ex-info (str "Conflicting values at index " index " for expansions: "
+    (ex-info (str "Conflicting values at index " index " when converging: "
                   (str/join ", " keys) ". Use the ^:override metadata to "
                   "set the preferred value.")
              {:reason            ::conflicting-expands
@@ -505,13 +507,23 @@
               :conflicting-index index
               :expand-keys       keys})))
 
-(defn- apply-expansion [config {:keys [index value]}]
-  (assoc-in config index value))
+(defn converge
+  "Deep-merge the values of a map. Raises an error on conflicting keys, unless
+  one (and only one) of the values is tagged with the ^:override metadata."
+  [m]
+  {:pre [(map? m) (every? map? (vals m))]}
+  (let [converges (mapcat converge-values m)]
+    (when-let [conflict (first (converge-conflicts converges))]
+      (throw (converge-conflict-exception m conflict)))
+    (->> converges
+         (sort-by :override?)
+         (sort-by #(not= (:value %) {}))
+         (reduce #(assoc-in %1 (:index %2) (:value %2)) {}))))
 
 (defn expand
   "Expand modules in the config map prior to initiation. The expand-key method
-  is applied to each entry in the map, and the results deep-merged together to
-  produce a new configuration.
+  is applied to each entry in the map, and the results deep-merged together
+  using converge to produce a new configuration.
 
   If there are conflicting keys with different values, an exception will be
   raised. Conflicts can be resolved by tagging one value with the :override
@@ -520,15 +532,12 @@
    (expand config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (let [expansions    (mapcat expansions (select-keys config keys))
-         overrides     (filter :override? expansions)
-         override-idxs (set (map :index overrides))
-         non-overrides (remove (comp override-idxs :index) expansions)]
-     (when-let [conflict (first (conflicting-expansions non-overrides))]
-       (throw (conflicting-expands-exception config conflict)))
-     (reduce apply-expansion
-             (apply dissoc config keys)
-             (concat non-overrides overrides)))))
+   (let [expand?  (set keys)
+         expanded (into {} (for [[k v] config]
+                             (if (expand? k)
+                               [k (expand-key k v)]
+                               [k {k v}])))]
+     (converge expanded))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency

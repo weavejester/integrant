@@ -244,6 +244,48 @@
     (is (= (ig/init (ig/prep {::p {:b 2}, ::a 1}))
            {::p [{:a [1], :b 2}], ::a [1]}))))
 
+(deftest converge-test
+  (testing "merge"
+    (is (= (ig/converge {:a {:x 1}, :b {:y 2}})
+           {:x 1, :y 2}))
+    (is (= (ig/converge {:a {:x {:y 1}}, :b {:x {:z 2}}})
+           {:x {:y 1, :z 2}}))
+    (is (= (ig/converge {:a {}, :b {:y 2}})
+           {:y 2}))
+    (is (= (ig/converge {:a {:x 1}, :b {}})
+           {:x 1})))
+
+  (testing "overrides"
+    (is (= (ig/converge {:a {:x 1}, :b ^:override {:x 2}})
+           {:x 2}))
+    (is (= (ig/converge {:a {:x {:y 1}}, :b {:x ^:override {:y 2}}})
+           {:x {:y 2}}))
+    (is (= (ig/converge {:a {:x {:y 1}}, :b ^:override {:x {:y 2}}})
+           {:x {:y 2}})))
+
+  (testing "conflicts"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "^Conflicting values at index "
+                          "\\[:x\\] when converging: :a, :b. Use the "
+                          "\\^:override metadata to set the preferred "
+                          "value\\.$"))
+         (ig/converge {:a {:x 1}, :b {:x 2}})))
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "^Conflicting values at index "
+                          "\\[:x\\] when converging: :a, :b. Use the "
+                          "\\^:override metadata to set the preferred "
+                          "value\\.$"))
+         (ig/converge {:a ^:override {:x 1}, :b ^:override {:x 2}})))
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "^Conflicting values at index "
+                          "\\[:x :y\\] when converging: :a, :b. Use the "
+                          "\\^:override metadata to set the preferred "
+                          "value\\.$"))
+         (ig/converge {:a {:x {:y 1}}, :b {:x {:y 2, :z 3}}})))))
+
 (deftest expand-test
   (testing "default expand"
     (is (= (ig/expand {::unique 1})
@@ -277,7 +319,7 @@
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "^Conflicting values at index "
                           "\\[:integrant\\.core-test/a\\] "
-                          "for expansions: :integrant\\.core-test/mod, "
+                          "when converging: :integrant\\.core-test/mod, "
                           ":integrant\\.core-test/mod-a\\. Use the "
                           "\\^:override metadata to set the preferred "
                           "value\\.$"))
@@ -287,7 +329,7 @@
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "^Conflicting values at index "
                           "\\[:integrant\\.core-test/b :v\\] "
-                          "for expansions: :integrant\\.core-test/mod, "
+                          "when converging: :integrant\\.core-test/mod, "
                           ":integrant\\.core-test/mod-b\\. Use the "
                           "\\^:override metadata to set the preferred "
                           "value\\.$"))
@@ -307,6 +349,8 @@
       (is (= m (ig/expand m))))
     (let [m {::a (ig/refset ::b) ::b 1}]
       (is (= m (ig/expand m))))))
+;; => #'integrant.core-test/expand-test
+;; => #'integrant.core-test/expand-test
 
 (deftest init-test
   (testing "without keys"
