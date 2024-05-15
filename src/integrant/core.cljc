@@ -507,6 +507,16 @@
               :conflicting-index index
               :expand-keys       keys})))
 
+(defn- find-in [m ks]
+  (if (next ks)
+    (-> (get-in m (butlast ks)) (find (last ks)))
+    (find m (first ks))))
+
+(defn- assoc-converge [m {:keys [index value override?]}]
+  (if-some [[_ v] (find-in m index)]
+    (if (or override? (= v {})) (assoc-in m index value) m)
+    (assoc-in m index value)))
+
 (defn converge
   "Deep-merge the values of a map. Raises an error on conflicting keys, unless
   one (and only one) of the values is tagged with the ^:override metadata."
@@ -515,10 +525,7 @@
   (let [converges (mapcat converge-values m)]
     (when-let [conflict (first (converge-conflicts converges))]
       (throw (converge-conflict-exception m conflict)))
-    (->> converges
-         (sort-by :override?)
-         (sort-by #(not= (:value %) {}))
-         (reduce #(assoc-in %1 (:index %2) (:value %2)) {}))))
+    (reduce assoc-converge {} converges)))
 
 (defn expand
   "Expand modules in the config map prior to initiation. The expand-key method
