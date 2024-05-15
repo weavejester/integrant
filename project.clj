@@ -14,6 +14,7 @@
             [lein-doo "0.1.11"]]
   :codox
   {:output-path "codox"
+   :metadata {:doc/format :markdown}
    :source-uri "http://github.com/weavejester/integrant/blob/{version}/{filepath}#L{line}"}
   :cljsbuild
   {:builds [{:id "test-nashorn"

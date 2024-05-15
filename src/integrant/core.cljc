@@ -167,7 +167,7 @@
 
 (defn read-string
   "Read a config from a string of edn. Refs may be denotied by tagging keywords
-  with #ig/ref."
+  with `#ig/ref`."
   ([s]
    (read-string {:eof nil} s))
   ([opts s]
@@ -195,9 +195,10 @@
    (defn load-namespaces
      "Attempt to load the namespaces referenced by the keys in a configuration.
      If a key is namespaced, both the namespace and the namespace concatenated
-     with the name will be tried. For example, if a key is :foo.bar/baz, then
-     the function will attempt to load the namespaces foo.bar and foo.bar.baz.
-     Upon completion, a list of all loaded namespaces will be returned."
+     with the name will be tried. For example, if a key is `:foo.bar/baz`, then
+     the function will attempt to load the namespaces `foo.bar` and
+     `foo.bar.baz`. Upon completion, a list of all loaded namespaces will be
+     returned."
      ([config]
       (load-namespaces config (keys config)))
      ([config keys]
@@ -431,9 +432,9 @@
 
 (defmulti suspend-key!
   "Suspend a running implementation associated with a key, so that it may be
-  eventually passed to resume-key. By default this multimethod calls halt-key!,
-  but it may be customized to do things like keep a server running, but buffer
-  incoming requests until the server is resumed."
+  eventually passed to resume-key. By default this multimethod calls
+  [[halt-key!]], but it may be customized to do things like keep a server
+  running, but buffer incoming requests until the server is resumed."
   {:arglists '([key value])}
   (fn [key _value] (normalize-key key)))
 
@@ -463,9 +464,11 @@
          (throw (wrap-assert-exception err system key value)))))
 
 (defn prep
-  "Prepare a config map for initiation. The prep-key method is applied to each
-  entry in the map, and the values replaced with the return value. This is used
-  for adding default values and references to the configuration."
+  "Prepare a config map for initiation. The [[prep-key]] method is applied to
+  each entry in the map, and the values replaced with the return value. This is
+  used for adding default values and references to the configuration.
+
+  Deprecated in favor of [[expand]]."
   {:deprecated "0.9.0"}
   ([config]
    (prep config (keys config)))
@@ -519,7 +522,7 @@
 
 (defn converge
   "Deep-merge the values of a map. Raises an error on conflicting keys, unless
-  one (and only one) of the values is tagged with the ^:override metadata."
+  one (and only one) of the values is tagged with the `^:override` metadata."
   [m]
   {:pre [(map? m) (every? map? (vals m))]}
   (let [converges (mapcat converge-values m)]
@@ -528,12 +531,12 @@
     (reduce assoc-converge {} converges)))
 
 (defn expand
-  "Expand modules in the config map prior to initiation. The expand-key method
-  is applied to each entry in the map, and the results deep-merged together
-  using converge to produce a new configuration.
+  "Expand modules in the config map prior to initiation. The [[expand-key]]
+  method is applied to each entry in the map, and the results deep-merged
+  together using [[converge]]to produce a new configuration.
 
   If there are conflicting keys with different values, an exception will be
-  raised. Conflicts can be resolved by tagging one value with the :override
+  raised. Conflicts can be resolved by tagging one value with the `^:override`
   metadata key."
   ([config]
    (expand config (keys config)))
@@ -548,8 +551,8 @@
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
-  order, initiated via the init-key multimethod, then the refs associated with
-  the key are resolved."
+  order, initiated via the [[init-key]] multimethod, then the refs associated
+  with the key are resolved."
   ([config]
    (init config (keys config)))
   ([config keys]
@@ -557,7 +560,7 @@
    (build config keys init-key wrapped-assert-key resolve-key)))
 
 (defn halt!
-  "Halt a system map by applying halt-key! in reverse dependency order."
+  "Halt a system map by applying [[halt-key!]] in reverse dependency order."
   ([system]
    (halt! system (keys system)))
   ([system keys]
@@ -576,8 +579,8 @@
 (defn resume
   "Turn a config map into a system map, reusing resources from an existing
   system when it's possible to do so. Keys are traversed in dependency order,
-  resumed with the resume-key multimethod, then the refs associated with the
-  key are resolved."
+  resumed with the [[resume-key]] multimethod, then the refs associated with
+  the key are resolved."
   ([config system]
    (resume config system (keys config)))
   ([config system keys]
@@ -592,7 +595,8 @@
           resolve-key)))
 
 (defn suspend!
-  "Suspend a system map by applying suspend-key! in reverse dependency order."
+  "Suspend a system map by applying [[suspend-key!]] in reverse dependency
+  order."
   ([system]
    (suspend! system (keys system)))
   ([system keys]
