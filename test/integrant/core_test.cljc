@@ -349,8 +349,6 @@
       (is (= m (ig/expand m))))
     (let [m {::a (ig/refset ::b) ::b 1}]
       (is (= m (ig/expand m))))))
-;; => #'integrant.core-test/expand-test
-;; => #'integrant.core-test/expand-test
 
 (deftest init-test
   (testing "without keys"
