@@ -1,3 +1,8 @@
+## 0.10.0 (2024-05-16)
+
+* Added `converge` function
+* Added default `init-key` method
+
 ## 0.9.0 (2024-04-29)
 
 * Updated default `expand-key` to have `:override` metadata
