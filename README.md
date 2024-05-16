@@ -578,6 +578,6 @@ workflow](http://thinkrelevance.com/blog/2013/06/04/clojure-workflow-reloaded).
 
 ## License
 
-Copyright © 2023 James Reeves
+Copyright © 2024 James Reeves
 
 Released under the MIT license.
