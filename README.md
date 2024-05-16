@@ -370,7 +370,22 @@ called before the configuration is initiated:
 (-> config ig/expand ig/init)
 ```
 
-Expansions supplant the now deprecated `prep` and `prep-key`.
+#### Replacing prep
+
+Expansions supplant the now deprecated `prep` and `prep-key`. If you had a
+method that looked like:
+
+```clojure
+(defmethod ig/prep-key ::example [_ v]
+  (assoc v :example "example prep"))
+```
+
+This should be turned into an `expand-key` method like this:
+
+```clojure
+(defmethod ig/expand-key ::example [k v]
+  {k (assoc v :example "example prep")})
+```
 
 ### Derived keywords
 
