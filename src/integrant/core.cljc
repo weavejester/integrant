@@ -471,11 +471,13 @@
   Deprecated in favor of [[expand]]."
   {:deprecated "0.9.0"}
   ([config]
-   (prep config (keys config)))
+   ^:deprecation-nowarn (prep config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
    (let [keyset (set keys)]
-     (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
+     (reduce-kv (fn [m k v] (assoc m k (if (keyset k)
+                                         ^:deprecation-nowarn (prep-key k v)
+                                         v)))
                 {} config))))
 
 (defn- converge-values [[k v]]
