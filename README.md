@@ -311,21 +311,10 @@ thought of as the equivalent of macros in normal Clojure code.
 
 An expansion is defined via the `expand-key` method. When `expand` is
 called on a configuration map, `expand-key` is called on every key/value
-pair, and then the results deep-merged into a new map. The default
-expansion is the identity expansion:
+that implements that method, and then the results are deep-merged into a
+new configuration map.
 
-```clojure
-(defmethod ig/expand-key :default [key value]
-  ^:override {key value})
-```
-
-Integrant will raise an error if two expansions set the same key to
-conflicting values. The `:override` metadata tag can be applied to
-indicate one value should be preferred and override conflicts. As
-seen above, the default expansion always has an override. Libraries
-should avoid the use of overrides in general.
-
-Expansions can be used to abstract groups of keys. For example:
+Expansions are used to abstract groups of keys. For example:
 
 ```clojure
 (defmethod ig/expand-key :module/greet [_ {:keys [name]}]
@@ -346,7 +335,7 @@ And would expand to:
  :handler/greet {:name "Alice"}}
 ```
 
-This allows for commonly used configurations to be abstracted out into
+This allows for commonly used configurations to be factored out into
 reusable modules, while still allowing the expansion to be inspected and
 modified. For example:
 
@@ -363,8 +352,30 @@ The port set via `:adapter/jetty` will override the port set when
  :handler/greet {:name "Alice"}}
 ```
 
-To use expansions, the `integrant.core/expand` function needs to be
-called before the configuration is initiated:
+This is because values you set via the configuration are considered to
+be higher priority than those generated via expansions. This can also
+be used to resolve conflicts in expansions. For example, suppose we have
+an expansion:
+
+```clojure
+(defmethod ig/expand-key :module/web-server [_ _]
+  {:adapter/jetty {:port 80}})
+```
+
+If we used this together with our `:module/greet` expansion, the port
+number would conflict. `:module/web-server` would want it to be `80`,
+while `:module/greet` would want it to be `8080`. Integrant can't
+resolve this on its own (it will raise an exception), so we need to
+specify which value it should use:
+
+```edn
+{:module/greet {:name "Alice"}
+ :module/web-server {}
+ :adapter/jetty {:port 80}}
+```
+
+To make use of expansions, the `integrant.core/expand` function needs to
+be called before the configuration is initiated:
 
 ```clojure
 (-> config ig/expand ig/init)
