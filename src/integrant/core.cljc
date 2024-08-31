@@ -494,7 +494,7 @@
          (remove (comp override-indexes :index))
          (group-by :index)
          (vals)
-         (filter next))))
+         (filter #(->> % (map :value) set next)))))
 
 (defn- converge-conflict-exception [config expansions]
   (let [index (-> expansions first :index)

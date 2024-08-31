@@ -322,6 +322,11 @@
                           "when converging: :integrant\\.core-test/mod, "
                           ":integrant\\.core-test/mod-b\\."))
          (ig/expand {::mod 1, ::mod-b 2}))))
+  (testing "conflicting keys with same value"
+    (is (= (ig/expand {::mod {:x 1} ::mod-a {:x 1}})
+           {::a {:x 1}, ::b {:v {:x 1}}}))
+    (is (= (ig/expand {::mod {:x 1} ::mod-a {:x 1} ::mod-b {:x 1}})
+           {::a {:x 1}, ::b {:v {:x 1}}})))
   (testing "resolved conflict"
     (is (= (ig/expand {::mod {:x 1}, ::mod-a {:x 2}, ::a {:x 3}})
            {::a {:x 3}, ::b {:v {:x 1}}})))
