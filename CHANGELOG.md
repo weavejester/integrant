@@ -1,3 +1,8 @@
+## 0.11.0 (2024-09-01)
+
+* **BREAKING CHANGE:** removed `^:override` metadata
+* Fixed expansions with identical indexes and values from conflicting
+
 ## 0.10.0 (2024-05-16)
 
 * Added `converge` function
