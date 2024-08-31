@@ -477,7 +477,7 @@
                 {} config))))
 
 (defn- normal-map? [x]
- (and (map? x) (not (reflike? x))))
+  (and (map? x) (not (reflike? x))))
 
 (defn- nested-values [idx [k v]]
   (if (and (normal-map? v) (seq v))
