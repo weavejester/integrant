@@ -256,34 +256,28 @@
            {:x 1})))
 
   (testing "overrides"
-    (is (= (ig/converge {:a {:x 1}, :b ^:override {:x 2}})
+    (is (= (ig/converge {:a {:x 1}, :b {:x 2}} {:x 2})
            {:x 2}))
-    (is (= (ig/converge {:a {:x {:y 1}}, :b {:x ^:override {:y 2}}})
+    (is (= (ig/converge {:a {:x {:y 1}}, :b {:x {:y 2}}} {:x {:y 2}})
            {:x {:y 2}}))
-    (is (= (ig/converge {:a {:x {:y 1}}, :b ^:override {:x {:y 2}}})
-           {:x {:y 2}})))
+    (is (= (ig/converge {:a {:x {:y 1}}, :b {:x {:y 2}}} {:x {:y 3}})
+           {:x {:y 3}})))
 
   (testing "conflicts"
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "^Conflicting values at index "
-                          "\\[:x\\] when converging: :a, :b. Use the "
-                          "\\^:override metadata to set the preferred "
-                          "value\\.$"))
+                          "\\[:x\\] when converging: :a, :b\\."))
          (ig/converge {:a {:x 1}, :b {:x 2}})))
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "^Conflicting values at index "
-                          "\\[:x\\] when converging: :a, :b. Use the "
-                          "\\^:override metadata to set the preferred "
-                          "value\\.$"))
-         (ig/converge {:a ^:override {:x 1}, :b ^:override {:x 2}})))
+                          "\\[:x\\] when converging: :a, :b\\."))
+         (ig/converge {:a {:x 1}, :b {:x 2}})))
     (is (thrown-with-msg?
          #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
          (re-pattern (str "^Conflicting values at index "
-                          "\\[:x :y\\] when converging: :a, :b. Use the "
-                          "\\^:override metadata to set the preferred "
-                          "value\\.$"))
+                          "\\[:x :y\\] when converging: :a, :b\\."))
          (ig/converge {:a {:x {:y 1}}, :b {:x {:y 2, :z 3}}})))))
 
 (deftest expand-test
@@ -304,12 +298,10 @@
     (is (= (ig/expand {::mod 1, ::b {:x 1}, ::c 2})
            {::a 1, ::b {:v 1, :x 1}, ::c 2})))
   (testing "expand with direct override"
-    (is (= (ig/expand {::mod {:x 1}, ::a ^:override {:x 2}})
+    (is (= (ig/expand {::mod {:x 1}, ::a {:x 2}})
            {::a {:x 2}, ::b {:v {:x 1}}})))
   (testing "expand with nested override"
-    (is (= (ig/expand {::mod {:x 1, :y 1}, ::mod-a ^:override {:y 2}})
-           {::a {:x 1, :y 2}, ::b {:v {:x 1, :y 1}}}))
-    (is (= (ig/expand {::mod-c 1, ::c ^:override {:x {:y {:z 2}}}})
+    (is (= (ig/expand {::mod-c 1, ::c {:x {:y {:z 2}}}})
            {::c {:x {:y {:z 2}}}})))
   (testing "expand with default override"
     (is (= (ig/expand {::mod 1, ::a 2}) {::a 2, ::b {:v 1}}))
@@ -320,9 +312,7 @@
          (re-pattern (str "^Conflicting values at index "
                           "\\[:integrant\\.core-test/a\\] "
                           "when converging: :integrant\\.core-test/mod, "
-                          ":integrant\\.core-test/mod-a\\. Use the "
-                          "\\^:override metadata to set the preferred "
-                          "value\\.$"))
+                          ":integrant\\.core-test/mod-a\\."))
          (ig/expand {::mod 1, ::mod-a 2}))))
   (testing "unresolved conflicting nested index"
     (is (thrown-with-msg?
@@ -330,19 +320,17 @@
          (re-pattern (str "^Conflicting values at index "
                           "\\[:integrant\\.core-test/b :v\\] "
                           "when converging: :integrant\\.core-test/mod, "
-                          ":integrant\\.core-test/mod-b\\. Use the "
-                          "\\^:override metadata to set the preferred "
-                          "value\\.$"))
+                          ":integrant\\.core-test/mod-b\\."))
          (ig/expand {::mod 1, ::mod-b 2}))))
   (testing "resolved conflict"
-    (is (= (ig/expand {::mod {:x 1}, ::mod-a {:x 2}, ::a ^:override {:x 3}})
+    (is (= (ig/expand {::mod {:x 1}, ::mod-a {:x 2}, ::a {:x 3}})
            {::a {:x 3}, ::b {:v {:x 1}}})))
   (testing "resolved nested conflict"
-    (is (= (ig/expand {::mod 1, ::mod-b 2, ::b ^:override {:v 3}})
+    (is (= (ig/expand {::mod 1, ::mod-b 2, ::b {:v 3}})
            {::a 1, ::b {:v 3}}))
     (is (= (ig/expand {[::one ::mod-c] 1
                        [::two ::mod-c] 2
-                       ::c ^:override {:x {:y {:z 3}}}})
+                       ::c {:x {:y {:z 3}}}})
            {::c {:x {:y {:z 3}}}})))
   (testing "expand with refs"
     (let [m {::a (ig/ref ::b) ::b 1}]

@@ -390,8 +390,6 @@
   {:arglists '([key value])}
   (fn [key _value] (normalize-key key)))
 
-(defmethod expand-key :default [k v] ^:override {k v})
-
 (defmulti init-key
   "Turn a config value associated with a key into a concrete implementation.
   For example, a database URL might be turned into a database connection."
@@ -478,76 +476,76 @@
      (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
                 {} config))))
 
+(defn- normal-map? [x]
+ (and (map? x) (not (reflike? x))))
+
+(defn- nested-values [idx [k v]]
+  (if (and (normal-map? v) (seq v))
+    (mapcat #(nested-values (conj idx k) %) v)
+    (list {:index (conj idx k), :value v})))
+
 (defn- converge-values [[k v]]
-  (let [override? (:override (meta v))]
-    (letfn [(gen-converges [idx [kn vn] override?]
-              (if (and (map? vn) (not (reflike? vn)) (seq vn))
-                (let [override? (or override? (:override (meta vn)))]
-                  (mapcat #(gen-converges (conj idx kn) % override?) vn))
-                (list {:key       k
-                       :index     (conj idx kn)
-                       :value     vn
-                       :override? (and override? (not (map? vn)))})))]
-      (mapcat #(gen-converges [] % override?) v))))
+  (->> (mapcat #(nested-values [] %) v)
+       (map #(assoc % :key k))))
 
-(defn- one-element? [coll]
-  (and (seq coll) (nil? (next coll))))
-
-(defn- converge-conflicts [converges]
-  (filter (fn [conflicts]
-            (and (next conflicts)
-                 (not (one-element? (filter :override? conflicts)))))
-          (vals (group-by :index converges))))
+(defn- converge-conflicts [converges overrides]
+  (let [override-indexes (set (map :index overrides))]
+    (->> converges
+         (remove (comp override-indexes :index))
+         (group-by :index)
+         (vals)
+         (filter next))))
 
 (defn- converge-conflict-exception [config expansions]
   (let [index (-> expansions first :index)
         keys  (map :key expansions)]
     (ex-info (str "Conflicting values at index " index " when converging: "
-                  (str/join ", " keys) ". Use the ^:override metadata to "
-                  "set the preferred value.")
+                  (str/join ", " keys) ".")
              {:reason            ::conflicting-expands
               :config            config
               :conflicting-index index
               :expand-keys       keys})))
 
-(defn- find-in [m ks]
-  (if (next ks)
-    (-> (get-in m (butlast ks)) (find (last ks)))
-    (find m (first ks))))
-
-(defn- assoc-converge [m {:keys [index value override?]}]
-  (if-some [[_ v] (find-in m index)]
-    (if (or override? (= v {})) (assoc-in m index value) m)
-    (assoc-in m index value)))
+(defn- assoc-converge [m {:keys [index value]}]
+  (if (or (not= value {}) (= ::missing (get-in m index ::missing)))
+    (assoc-in m index value)
+    m))
 
 (defn converge
   "Deep-merge the values of a map. Raises an error on conflicting keys, unless
-  one (and only one) of the values is tagged with the `^:override` metadata."
-  [m]
-  {:pre [(map? m) (every? map? (vals m))]}
-  (let [converges (mapcat converge-values m)]
-    (when-let [conflict (first (converge-conflicts converges))]
-      (throw (converge-conflict-exception m conflict)))
-    (reduce assoc-converge {} converges)))
+  an override is specified via the override-map."
+  ([m] (converge m {}))
+  ([m override-map]
+   {:pre [(map? m) (every? map? (vals m))]}
+   (let [converges (mapcat converge-values m)
+         overrides (mapcat #(nested-values [] %) override-map)]
+     (when-let [conflict (first (converge-conflicts converges overrides))]
+       (throw (converge-conflict-exception m conflict)))
+     (reduce assoc-converge {} (concat converges overrides)))))
+
+(defn- can-expand-key? [k]
+  (get-method expand-key (normalize-key k)))
 
 (defn expand
   "Expand modules in the config map prior to initiation. The [[expand-key]]
-  method is applied to each entry in the map, and the results deep-merged
-  together using [[converge]]to produce a new configuration.
+  method is applied to each entry in the map to create an expansion, and the
+  results are deep-merged together using [[converge]] to produce a new
+  configuration.
 
-  If there are conflicting keys with different values, an exception will be
-  raised. Conflicts can be resolved by tagging one value with the `^:override`
-  metadata key."
+  If two expansions generate different values for the same keys, an exception
+  will be raised. Configuration values that do not come from an expansion will
+  override keys from expansions, allowing conflicts to be resolved by user-
+  defined values."
   ([config]
    (expand config (keys config)))
   ([config keys]
    {:pre [(map? config)]}
-   (let [expand?  (set keys)
-         expanded (into {} (for [[k v] config]
-                             (if (expand? k)
-                               [k (expand-key k v)]
-                               [k {k v}])))]
-     (converge expanded))))
+   (let [key-set     (set keys)
+         expand-key? (fn [[k _]] (and (key-set k) (can-expand-key? k)))]
+     (converge (->> (filter expand-key? config)
+                    (reduce (fn [m [k v]] (assoc m k (expand-key k v))) {}))
+               (->> (remove expand-key? config)
+                    (into {}))))))
 
 (defn init
   "Turn a config map into an system map. Keys are traversed in dependency
