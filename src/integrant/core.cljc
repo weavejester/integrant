@@ -102,6 +102,18 @@
   [x]
   (satisfies? RefLike x))
 
+(defrecord Profile [])
+
+(defn profile
+  "Create a map of profile keys to values. See: `expand`."
+  [m]
+  (map->Profile m))
+
+(defn profile?
+  "Return true if its argument is a profile."
+  [x]
+  (instance? Profile x))
+
 (defn- depth-search [pred? coll]
   (filter pred? (tree-seq coll? seq coll)))
 
@@ -163,7 +175,10 @@
 (defn- reverse-dependent-keys [config keys]
   (reverse (find-keys config keys dep/transitive-dependents-set)))
 
-(def ^:private default-readers {'ig/ref ref, 'ig/refset refset})
+(def ^:private default-readers
+  {'ig/ref     ref
+   'ig/refset  refset
+   'ig/profile profile})
 
 (defn read-string
   "Read a config from a string of edn. Refs may be denotied by tagging keywords
@@ -475,6 +490,25 @@
    (let [keyset (set keys)]
      (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
                 {} config))))
+
+(defn- missing-profile-key-exception [profile keys]
+  (ex-info (str "Missing a valid key for profile")
+           {:reason       ::missing-profile-key
+            :profile      profile
+            :profile-keys keys}))
+
+(defn- deprofile-1 [profile keys]
+  (if-some [key (first (filter #(contains? profile %) keys))]
+    (get profile key)
+    (throw (missing-profile-key-exception profile keys))))
+
+(defn deprofile
+  "Find all profiles in a collection, then turns them into values using an
+  ordered collection of profile keys. The profile keys will be tried on each
+  profile in order until the profile returns a match. If there is no match, a
+  exception will be thrown."
+  [coll profile-keys]
+  (walk/postwalk #(if (profile? %) (deprofile-1 % profile-keys) %) coll))
 
 (defn- normal-map? [x]
   (and (map? x) (not (reflike? x))))
