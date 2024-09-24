@@ -3,7 +3,7 @@
   :url "https://github.com/weavejester/integrant"
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.11.4"]
                  [weavejester/dependency "0.2.1"]]
   :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.10.597"]
                                        [org.clojure/tools.reader "1.5.0"]]}
