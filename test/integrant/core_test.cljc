@@ -675,14 +675,20 @@
         (is (= (ex-data cause) {:reason ::test}))))))
 
 (deftest profile-test
-  (is (= (ig/deprofile (ig/profile {:a 1}) [:a])
-         1))
-  (is (= (ig/deprofile (ig/profile {:a 1 :b 2}) [:b :a])
-         2))
-  (is (= (ig/deprofile {::x (ig/profile {:a 1 :b 2})
-                        ::y (ig/profile {:b 1 :a 2})}
-                       [:a])
-         {::x 1, ::y 2}))
-  (is (= (ig/deprofile {::x [1 2 (ig/profile {:a 1, :b 2, :c 3})]}
-                       [:c :a])
-         {::x [1 2 3]})))
+  (testing "deprofiling"
+    (is (= (ig/deprofile (ig/profile {:a 1}) [:a])
+           1))
+    (is (= (ig/deprofile (ig/profile {:a 1 :b 2}) [:b :a])
+           2))
+    (is (= (ig/deprofile {::x (ig/profile {:a 1 :b 2})
+                          ::y (ig/profile {:b 1 :a 2})}
+                         [:a])
+           {::x 1, ::y 2}))
+    (is (= (ig/deprofile {::x [1 2 (ig/profile {:a 1, :b 2, :c 3})]}
+                         [:c :a])
+           {::x [1 2 3]})))
+  (testing "syntax sugar"
+    (is (= (ig/profile {:a 1})
+           (ig/profile :a 1)))
+    (is (= (ig/profile {:a 1, :b 2})
+           (ig/profile :a 1 :b 2)))))

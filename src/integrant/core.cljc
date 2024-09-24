@@ -105,8 +105,8 @@
 (defrecord Profile [])
 
 (defn profile
-  "Create a map of profile keys to values. See: `expand`."
-  [m]
+  "Create a map of profile keys to values. See: `deprofile`."
+  [& {:as m}]
   (map->Profile m))
 
 (defn profile?
