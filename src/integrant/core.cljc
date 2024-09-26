@@ -492,7 +492,8 @@
                 {} config))))
 
 (defn- missing-profile-key-exception [profile keys]
-  (ex-info (str "Missing a valid key for profile")
+  (ex-info (str "Missing a valid key for profile: #ig/profile "
+                (into {} profile))
            {:reason       ::missing-profile-key
             :profile      profile
             :profile-keys keys}))

@@ -687,6 +687,14 @@
     (is (= (ig/deprofile {::x [1 2 (ig/profile {:a 1, :b 2, :c 3})]}
                          [:c :a])
            {::x [1 2 3]})))
+
+  (testing "missing keys"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern (str "Missing a valid key for profile: #ig/profile "
+                          "\\{:a 1, :b 2\\}"))
+         (ig/deprofile (ig/profile {:a 1, :b 2}) [:c]))))
+
   (testing "syntax sugar"
     (is (= (ig/profile {:a 1})
            (ig/profile :a 1)))
