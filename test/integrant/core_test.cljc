@@ -1,6 +1,7 @@
 (ns integrant.core-test
   (:require #?(:clj  [clojure.test :refer [are deftest is testing]]
                :cljs [cljs.test :refer-macros [are deftest is testing]])
+            [clojure.walk :as walk]
             [integrant.core :as ig]
             [weavejester.dependency :as dep]))
 
@@ -341,7 +342,12 @@
     (let [m {::a (ig/ref ::b) ::b 1}]
       (is (= m (ig/expand m))))
     (let [m {::a (ig/refset ::b) ::b 1}]
-      (is (= m (ig/expand m))))))
+      (is (= m (ig/expand m)))))
+  (testing "expand with inner function"
+    (letfn [(walk-inc [x]
+              (walk/postwalk #(if (int? %) (inc %) %) x))]
+      (is (= {::a {:x 2}, ::b {:v {:x 2}}}
+             (ig/expand {::mod {:x 1}} walk-inc))))))
 
 (deftest init-test
   (testing "without keys"

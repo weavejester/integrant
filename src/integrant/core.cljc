@@ -562,7 +562,7 @@
   (get-method expand-key (normalize-key k)))
 
 (defn expand
-  "Expand modules in the config map prior to initiation. The [[expand-key]]
+  "Expand 'modules' in the config map prior to initiation. The [[expand-key]]
   method is applied to each entry in the map to create an expansion, and the
   results are deep-merged together using [[converge]] to produce a new
   configuration.
@@ -570,15 +570,22 @@
   If two expansions generate different values for the same keys, an exception
   will be raised. Configuration values that do not come from an expansion will
   override keys from expansions, allowing conflicts to be resolved by user-
-  defined values."
+  defined values.
+
+  Additionally, an function, innerf, may be supplied to transform the output
+  from expand-key before it is converged. A common use for this is to
+  [[deprofile]] the expansions."
   ([config]
-   (expand config (keys config)))
-  ([config keys]
+   (expand config identity))
+  ([config innerf]
+   (expand config innerf (keys config)))
+  ([config innerf keys]
    {:pre [(map? config)]}
    (let [key-set     (set keys)
          expand-key? (fn [[k _]] (and (key-set k) (can-expand-key? k)))]
      (converge (->> (filter expand-key? config)
-                    (reduce (fn [m [k v]] (assoc m k (expand-key k v))) {}))
+                    (map (fn [[k v]] [k (innerf (expand-key k v))]))
+                    (reduce (fn [m [k v]] (assoc m k v)) {}))
                (->> (remove expand-key? config)
                     (into {}))))))
 
