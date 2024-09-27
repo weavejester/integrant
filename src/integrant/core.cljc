@@ -508,8 +508,10 @@
   ordered collection of profile keys. The profile keys will be tried on each
   profile in order until the profile returns a match. If there is no match, a
   exception will be thrown."
-  [coll profile-keys]
-  (walk/postwalk #(if (profile? %) (deprofile-1 % profile-keys) %) coll))
+  ([profile-keys]
+   #(deprofile % profile-keys))
+  ([coll profile-keys]
+   (walk/postwalk #(if (profile? %) (deprofile-1 % profile-keys) %) coll)))
 
 (defn- normal-map? [x]
   (and (map? x) (not (reflike? x))))

@@ -16,6 +16,9 @@
 (defmethod ig/expand-key ::mod-c [_ v] {::c {:x {:y {:z v}}}})
 (defmethod ig/expand-key ::mod-z [_ v] {::z v})
 
+(defmethod ig/expand-key ::mod-prof [_ v]
+  {::a (ig/profile :dev {:dev v}, :test {:test v})})
+
 (defmethod ig/init-key ::default [k v]
   (swap! log conj [:init k v])
   [v])
@@ -705,4 +708,13 @@
     (is (= (ig/profile {:a 1})
            (ig/profile :a 1)))
     (is (= (ig/profile {:a 1, :b 2})
-           (ig/profile :a 1 :b 2)))))
+           (ig/profile :a 1 :b 2)))
+    (let [p (ig/profile :a 1)]
+     (is (= (ig/deprofile p [:a])
+            ((ig/deprofile [:a]) p)))))
+
+  (testing "expand and deprofile"
+    (is (= (ig/expand {::mod-prof 1} (ig/deprofile [:dev]))
+           {::a {:dev 1}}))
+    (is (= (ig/expand {::mod-prof 2} (ig/deprofile [:test]))
+           {::a {:test 2}}))))
