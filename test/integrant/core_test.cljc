@@ -710,8 +710,8 @@
     (is (= (ig/profile {:a 1, :b 2})
            (ig/profile :a 1 :b 2)))
     (let [p (ig/profile :a 1)]
-     (is (= (ig/deprofile p [:a])
-            ((ig/deprofile [:a]) p)))))
+      (is (= (ig/deprofile p [:a])
+             ((ig/deprofile [:a]) p)))))
 
   (testing "expand and deprofile"
     (is (= (ig/expand {::mod-prof 1} (ig/deprofile [:dev]))
