@@ -73,6 +73,12 @@
 (defn- init-example [v]
   (str "init" v))
 
+(deftest annotate-describe-test
+  (ig/annotate ::foo {:doc "A test keyword"})
+  (ig/annotate ::bar {:doc "Another test keyword"})
+  (is (= {:doc "A test keyword"} (ig/describe ::foo)))
+  (is (= {:doc "Another test keyword"} (ig/describe ::bar))))
+
 (deftest ref-test
   (is (ig/ref? (ig/ref ::foo)))
   (is (ig/ref? (ig/ref [::foo ::bar])))

@@ -7,6 +7,21 @@
             [clojure.string :as str]
             [weavejester.dependency :as dep]))
 
+(def ^:private registry (atom {}))
+
+(defn annotate
+  "Annotate a namespaced keyword with a map of metadata that will be stored in a
+  global registry. Use [[describe]] to retrieve the keyword annotation map."
+  [kw metadata]
+  {:pre [(qualified-keyword? kw) (map? metadata)]}
+  (swap! registry assoc kw metadata))
+
+(defn describe
+  "Return the annotation map for a namespaced keyword."
+  [kw]
+  {:pre [(qualified-keyword? kw)]}
+  (@registry kw))
+
 (defprotocol RefLike
   (ref-key [r] "Return the key of the reference.")
   (ref-resolve [r config resolvef] "Return the resolved value."))
