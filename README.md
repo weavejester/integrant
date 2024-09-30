@@ -398,6 +398,65 @@ This should be turned into an `expand-key` method like this:
   {k (assoc v :example "example prep")})
 ```
 
+### Profiles
+
+Sometimes Integrant operates in multiple environments that require the
+configuration to be slightly changed. This is where profiles can be
+useful.
+
+For example, suppose we wanted the web server to run on port 8080 in the
+development environment, and port 80 in the production environment:
+
+```edn
+{:adapter/jetty {:port #ig/profile {:dev 8080, :prod 80}}}
+```
+
+To choose a profile to use, the `integrant.core/deprofile` function is
+used:
+
+```clojure
+(ig/deprofile config [:dev])
+```
+
+This function takes the configuration and an ordered collection of
+profile keys. The keys are tried in sequence until one fits. If there's
+a profile that no supplied key fits, an exception is raised.
+
+In the above case, it will return a configuration map:
+
+```edn
+{:adapter/jetty {:port 8080}}
+```
+
+#### Profiles and expansions
+
+It's sometimes useful for expansions to be given profiles. For example:
+
+```clojure
+(defmethod ig/expand-key :module/greet [_ {:keys [name]}]
+  (ig/profile
+   :dev  {:adapter.jetty {:port 8080, :handler (ig/ref :handler/debug)}
+          :handler/debug {:name name}}
+   :prod {:adapter/jetty {:port 80, :handler (ig/ref :handler/greet)}
+          :handler/greet {:name name}})
+```
+
+The expansion generated depends on the profile used. To use this, the
+deprofile step needs to be carried out after the expansion, but before
+the expansions are merged. Fortunately, the `expand` function allows for
+a inner processing function to be supplied:
+
+```clojure
+(ig/expand config #(ig/deprofile % [:dev]))
+```
+
+This ensures the deprofile step is applied before the expansions are
+merged. This can also be written more concisely as:
+
+```clojure
+(ig/expand config (ig/deprofile [:dev]))
+```
+
 ### Derived keywords
 
 Keywords have an inherited hierarchy. Integrant takes advantage of
