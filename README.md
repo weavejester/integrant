@@ -636,6 +636,23 @@ This will attempt to load the namespace `foo.component` and also
 `foo.component.bar`. A list of all successfully loaded namespaces will
 be returned from the function. Missing namespaces are ignored.
 
+### Annotations
+
+Namespaced keywords may be annotated with metadata using the
+`integrant.core/annotate` function:
+
+```clojure
+(ig/annotate :adapter/jetty
+  {:doc "A Ring adapter for the Jetty webserver."})
+```
+
+This metadata can be recalled with `integrant.core/describe`:
+
+```clojure
+(ig/describe :adapter/jetty)
+;; => {:doc "A Ring adapter for the Jetty webserver."}
+```
+
 ## Reloaded workflow
 
 See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to
