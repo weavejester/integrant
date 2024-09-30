@@ -1,0 +1,1 @@
+{:integrant.core-test/a {:doc "A test keyword."}}

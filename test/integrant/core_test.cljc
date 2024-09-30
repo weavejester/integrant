@@ -130,6 +130,14 @@
          (underive :example/child :example/mother)))))
 
 #?(:clj
+   (deftest load-annotations-test
+     (try
+       (ig/load-annotations)
+       (is (= {:doc "A test keyword."} (ig/describe ::a)))
+       (finally
+         (ig/annotate ::a {})))))
+
+#?(:clj
    (deftest load-namespaces-test
      (testing "all namespaces"
        (remove-lib 'integrant.test.foo)

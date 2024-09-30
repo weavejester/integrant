@@ -266,6 +266,28 @@
           (doseq [[tag parents] hierarchy, parent parents]
             (derive tag parent)))))))
 
+#?(:clj
+   (defn load-annotations
+     "Search the base classpath for all resources that share the same path
+     (by default `integrant/annotations.edn`), and use their contents to
+     add annotations to namespaced keywords via [[annotate]]. This allows
+     annotations to be specified without needing to load every namespace.
+
+     The annoation resources should be edn files that map namespaced keywords
+     to maps of annotation metadata. For example:
+
+         {:example/keyword {:doc \"An example keyword.\"}}
+
+     This is equivalent to:
+
+         (annotate :example/keyword {:doc \"An example keyword.\"})"
+     ([] (load-annotations "integrant/annotations.edn"))
+     ([path]
+      (doseq [url (resources path)]
+        (let [annotations (edn/read-string (slurp url))]
+          (doseq [[kw metadata] annotations]
+            (annotate kw metadata)))))))
+
 (defn- missing-refs-exception [config refs]
   (ex-info (str "Missing definitions for refs: " (str/join ", " refs))
            {:reason ::missing-refs
