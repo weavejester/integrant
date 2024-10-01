@@ -1,3 +1,11 @@
+## 0.12.0 (2024-10-01)
+
+* Added `profile` and `deprofile`
+* Added `annotate` and `describe`
+* Added `load-annotations`
+* Added inner function argument to `expand`
+* Updated minimum Clojure version to 1.11
+
 ## 0.11.0 (2024-09-01)
 
 * **BREAKING CHANGE:** removed `^:override` metadata
