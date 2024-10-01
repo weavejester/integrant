@@ -653,6 +653,25 @@ This metadata can be recalled with `integrant.core/describe`:
 ;; => {:doc "A Ring adapter for the Jetty webserver."}
 ```
 
+### Loading hierarchies and annotations
+
+Loading a Clojure namespace can be slow and potentially side-effectful,
+and it's not possible to know ahead of time whether a namespace adds
+keyword annotations or hierarchy information.
+
+To solve this issue, Integrant provides ways of loading keyword
+hierarchies and annotations from edn files on the classpath:
+
+```clojure
+(ig/load-hierarchy)
+(ig/load-annotations)
+```
+
+These functions will search the classpath for files named
+`integrant/hierarchy.edn` and `integrant/annotations.edn` respectively.
+Including these files in a library will allow Integrant to quickly
+discover information about the keywords used in the library.
+
 ## Reloaded workflow
 
 See [Integrant-REPL](https://github.com/weavejester/integrant-repl) to
