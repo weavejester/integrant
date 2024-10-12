@@ -1,3 +1,7 @@
+## 0.12.1 (2024-10-12)
+
+* Fixed bug with `expand` merging profiles
+
 ## 0.12.0 (2024-10-01)
 
 * Added `profile` and `deprofile`
