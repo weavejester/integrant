@@ -731,4 +731,8 @@
     (is (= (ig/expand {::mod-prof 1} (ig/deprofile [:dev]))
            {::a {:dev 1}}))
     (is (= (ig/expand {::mod-prof 2} (ig/deprofile [:test]))
-           {::a {:test 2}}))))
+           {::a {:test 2}}))
+    (is (= (-> {::x (ig/profile {:a 1, :b 2})}
+               (ig/expand (ig/deprofile [:a]))
+               (ig/deprofile [:a]))
+           {::x 1}))))
