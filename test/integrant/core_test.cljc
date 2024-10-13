@@ -108,6 +108,10 @@
             {:foo/a (ig/ref :foo/b), :foo/b 1}))
      (is (= (ig/read-string "{:foo/a #ig/refset :foo/b, :foo/b 1}")
             {:foo/a (ig/refset :foo/b), :foo/b 1}))
+     (is (= (ig/read-string "{:foo/a #ig/profile {:dev 1, :test 2}}")
+            {:foo/a (ig/profile {:dev 1, :test 2})}))
+     (is (= (ig/read-string "{:foo/a #ig/var port}")
+            {:foo/a (ig/var 'port)}))
      (is (= (ig/read-string {:readers {'test/var find-var}}
                             "{:foo/a #test/var clojure.core/+}")
             {:foo/a #'+}))))

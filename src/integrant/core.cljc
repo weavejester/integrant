@@ -217,7 +217,8 @@
 (def ^:private default-readers
   {'ig/ref     ref
    'ig/refset  refset
-   'ig/profile profile})
+   'ig/profile profile
+   'ig/var     var})
 
 (defn read-string
   "Read a config from a string of edn. Refs may be denotied by tagging keywords
