@@ -457,6 +457,24 @@ merged. This can also be written more concisely as:
 (ig/expand config (ig/deprofile [:dev]))
 ```
 
+## Vars
+
+A var is a placeholder for a value that will be added later to the
+configuration:
+
+```edn
+{:adapter/jetty {:port #ig/var port}}
+```
+
+This can be set by supplying a map of values to the `bind` function:
+
+```clojure
+(ig/bind config {'port 8080})
+```
+
+If there are any unbound vars when `init` is called, an exception will
+be thrown.
+
 ### Derived keywords
 
 Keywords have an inherited hierarchy. Integrant takes advantage of
