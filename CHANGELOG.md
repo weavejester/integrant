@@ -1,3 +1,7 @@
+## 0.13.0 (2024-10-13)
+
+* Added `var` and `bind`
+
 ## 0.12.1 (2024-10-12)
 
 * Fixed bug with `expand` merging profiles
