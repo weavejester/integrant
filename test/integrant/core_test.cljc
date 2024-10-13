@@ -738,12 +738,23 @@
            {::x 1}))))
 
 (deftest var-test
-  (is (= {::x 1}
-         (ig/bind {::x (ig/var 'v)} {'v 1})))
-  (is (= {::x {:y 1}}
-         (ig/bind {::x {:y (ig/var 'v)}} {'v 1})))
-  (is (= {::x {:a 1, :b 2}}
-         (ig/bind {::x {:a (ig/var 'a) :b (ig/var 'b)}}
-                  {'a 1, 'b 2})))
-  (is (= {::x {:y [1 2 3]}}
-         (ig/bind {::x {:y [1 2 (ig/var 'z)]}} {'z 3}))))
+  (testing "var binding"
+    (is (= {::x 1}
+           (ig/bind {::x (ig/var 'v)} {'v 1})))
+    (is (= {::x {:y 1}}
+           (ig/bind {::x {:y (ig/var 'v)}} {'v 1})))
+    (is (= {::x {:a 1, :b 2}}
+           (ig/bind {::x {:a (ig/var 'a) :b (ig/var 'b)}}
+                    {'a 1, 'b 2})))
+    (is (= {::x {:y [1 2 3]}}
+           (ig/bind {::x {:y [1 2 (ig/var 'z)]}} {'z 3}))))
+
+  (testing "init with unbound vars"
+    (is (thrown-with-msg?
+         #?(:clj clojure.lang.ExceptionInfo :cljs cljs.core.ExceptionInfo)
+         (re-pattern "Unbound vars: foo, bar")
+         (ig/init {::x {:foo (ig/var 'foo), :bar (ig/var 'bar)}}))))
+
+  (testing "expand with vars"
+    (is (= (-> {::x (ig/var 'x)} (ig/expand) (ig/bind {'x 1}))
+           {::x 1}))))

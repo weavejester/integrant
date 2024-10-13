@@ -338,6 +338,15 @@
             :config config
             :key key}))
 
+(defn- unbound-vars-exception [config vars]
+  (ex-info (str "Unbound vars: " (str/join ", " vars))
+           {:reason ::unbound-vars
+            :config config
+            :unbound-vars vars}))
+
+(defn- unbound-vars [config]
+  (map :name (depth-search var? config)))
+
 (defn- resolve-refs [config resolvef value]
   (walk/postwalk
    #(if (reflike? %) (ref-resolve % config resolvef) %)
@@ -438,6 +447,8 @@
                                        (map key (find-derived config ref)))))
      (when-let [refs (seq (missing-refs relevant-config))]
        (throw (missing-refs-exception config refs)))
+     (when-let [vars (seq (unbound-vars relevant-config))]
+       (throw (unbound-vars-exception config vars)))
      (reduce (partial build-key f assertf resolvef)
              (with-meta {} {::origin config})
              (map (fn [k] [k (config k)]) relevant-keys)))))
@@ -575,7 +586,7 @@
    (walk/postwalk #(if (profile? %) (deprofile-1 % profile-keys) %) coll)))
 
 (defn- normal-map? [x]
-  (and (map? x) (not (reflike? x)) (not (profile? x))))
+  (and (map? x) (not (reflike? x)) (not (profile? x)) (not (var? x))))
 
 (defn- nested-values [idx [k v]]
   (if (and (normal-map? v) (seq v))
