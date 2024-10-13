@@ -1,5 +1,5 @@
 (ns integrant.core
-  (:refer-clojure :exclude [ref read-string run!])
+  (:refer-clojure :exclude [ref read-string run! var?])
   (:require #?(:clj  [clojure.edn :as edn]
                :cljs [clojure.tools.reader.edn :as edn])
             [clojure.walk :as walk]
@@ -128,6 +128,30 @@
   "Return true if its argument is a profile."
   [x]
   (instance? Profile x))
+
+(defrecord Var [name])
+
+(defn var
+  "Create a variable in a configuration that must be substituted for a value
+  using [[bind]]."
+  [name]
+  {:pre [(symbol? name)]}
+  (->Var name))
+
+(defn var?
+  "Return true if its argument is a var."
+  [x]
+  (instance? Var x))
+
+(defn bind
+  "Bind the variables (see: [[var]]) in a collection to values, based on a
+  lookup map."
+  [config lookup-map]
+  {:pre [(map? config) (map? lookup-map)]}
+  (walk/postwalk #(if (and (var? %) (contains? lookup-map (:name %)))
+                    (lookup-map (:name %))
+                    %)
+                 config))
 
 (defn- depth-search [pred? coll]
   (filter pred? (tree-seq coll? seq coll)))

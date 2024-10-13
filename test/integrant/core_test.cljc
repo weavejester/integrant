@@ -736,3 +736,14 @@
                (ig/expand (ig/deprofile [:a]))
                (ig/deprofile [:a]))
            {::x 1}))))
+
+(deftest var-test
+  (is (= {::x 1}
+         (ig/bind {::x (ig/var 'v)} {'v 1})))
+  (is (= {::x {:y 1}}
+         (ig/bind {::x {:y (ig/var 'v)}} {'v 1})))
+  (is (= {::x {:a 1, :b 2}}
+         (ig/bind {::x {:a (ig/var 'a) :b (ig/var 'b)}}
+                  {'a 1, 'b 2})))
+  (is (= {::x {:y [1 2 3]}}
+         (ig/bind {::x {:y [1 2 (ig/var 'z)]}} {'z 3}))))
