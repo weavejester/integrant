@@ -120,7 +120,7 @@
 (defrecord Profile [])
 
 (defn profile
-  "Create a map of profile keys to values. See: `deprofile`."
+  "Create a map of profile keys to values. See: [[deprofile]]."
   [& {:as m}]
   (map->Profile m))
 
