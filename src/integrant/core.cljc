@@ -1,5 +1,5 @@
 (ns integrant.core
-  (:refer-clojure :exclude [ref read-string run! var?])
+  (:refer-clojure :exclude [ref read-string run! var? #?@(:cljs [Var ->Var])])
   (:require #?(:clj  [clojure.edn :as edn]
                :cljs [clojure.tools.reader.edn :as edn])
             [clojure.walk :as walk]
