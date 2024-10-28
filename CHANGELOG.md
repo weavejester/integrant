@@ -1,3 +1,7 @@
+## 0.13.1 (2024-10-28)
+
+* Fixed bug when expanding configs with records (#112)
+
 ## 0.13.0 (2024-10-13)
 
 * Added `var` and `bind`
