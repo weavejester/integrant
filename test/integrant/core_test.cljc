@@ -302,6 +302,8 @@
                           "\\[:x :y\\] when converging: :a, :b\\."))
          (ig/converge {:a {:x {:y 1}}, :b {:x {:y 2, :z 3}}})))))
 
+(defrecord TestRecord [x])
+
 (deftest expand-test
   (testing "default expand"
     (is (= (ig/expand {::unique 1})
@@ -363,6 +365,9 @@
     (let [m {::a (ig/ref ::b) ::b 1}]
       (is (= m (ig/expand m))))
     (let [m {::a (ig/refset ::b) ::b 1}]
+      (is (= m (ig/expand m)))))
+  (testing "expand with records"
+    (let [m {::a (->TestRecord 1), ::b 1}]
       (is (= m (ig/expand m)))))
   (testing "expand with inner function"
     (letfn [(walk-inc [x]

@@ -587,7 +587,7 @@
    (walk/postwalk #(if (profile? %) (deprofile-1 % profile-keys) %) coll)))
 
 (defn- normal-map? [x]
-  (and (map? x) (not (reflike? x)) (not (profile? x)) (not (var? x))))
+  (and (map? x) (not (record? x))))
 
 (defn- nested-values [idx [k v]]
   (if (and (normal-map? v) (seq v))
