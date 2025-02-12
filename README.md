@@ -158,12 +158,13 @@ the supplied keys (and any referenced keys). For example:
 
 #### Initializer functions
 
-Sometimes all that is necessary is `init-key`, particularly if what is being
-initiated is all in memory, and we can rely on the garbage collector to clean
-up afterwards.
+Sometimes all that is necessary is `init-key`, particularly if what is
+being initiated is all in memory, and we can rely on the garbage
+collector to clean up afterwards.
 
-For this purpose, `init-key` will try to find a function matching the key if
-no more specific method is set. For example:
+For this purpose, `init-key` will try to find a function with the
+**same namespace and name** as the keyword, if no more specific method
+is set. For example:
 
 ```clojure
 (def config
@@ -182,9 +183,9 @@ The `sugared-greet` function is equivalent to the `init-key` method:
   (println "Hi" name))
 ```
 
-Note that the function needs to be in a loaded namespace for `init-key` to find
-it. The `integrant.core/load-namespaces` function can be used on a configuration
-to load namespaces matching the keys.
+Note that the function needs to be in a loaded namespace for `init-key`
+to find it. The `integrant.core/load-namespaces` function can be used on
+a configuration to load namespaces matching the keys.
 
 
 ### Suspending and resuming
