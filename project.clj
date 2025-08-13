@@ -4,7 +4,7 @@
   :license {:name "The MIT License"
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.11.4"]
-                 [weavejester/dependency "0.2.1"]]
+                 [weavejester/dependency "1.0.0"]]
   :profiles {:provided {:dependencies [[org.clojure/clojurescript "1.11.132"]
                                        [org.clojure/tools.reader "1.5.2"]]}
              :1.12 {:dependencies [[org.clojure/clojure "1.12.0"]]}}
