@@ -1,3 +1,7 @@
+## 1.0.0-RC1 (2025-08-13)
+
+* **BREAKING CHANGE:** Removed `prep` and `prep-key`
+
 ## 0.13.1 (2024-10-28)
 
 * Fixed bug when expanding configs with records (#112)

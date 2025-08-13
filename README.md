@@ -41,11 +41,11 @@ initialized into a system.
 
 Add the following dependency to your deps.edn file:
 
-    integrant/integrant {:mvn/version "0.13.1"}
+    integrant/integrant {:mvn/version "1.0.0-RC1"}
 
 Or this to your Leiningen dependencies:
 
-    [integrant "0.13.1"]
+    [integrant "1.0.0-RC1"]
 
 ## Presentations
 
