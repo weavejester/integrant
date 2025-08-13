@@ -1,3 +1,7 @@
+## 1.0.0-RC2 (2025-08-13)
+
+* Updated `weavejester/dependency` to 1.0.0
+
 ## 1.0.0-RC1 (2025-08-13)
 
 * **BREAKING CHANGE:** Removed `prep` and `prep-key`
