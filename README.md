@@ -47,10 +47,6 @@ Or this to your Leiningen dependencies:
 
     [integrant "1.0.0-RC1"]
 
-## Presentations
-
-* [Enter Integrant](https://skillsmatter.com/skillscasts/9820-enter-integrant)
-
 ## Usage
 
 ### Configurations
