@@ -463,15 +463,6 @@
 
 (defmethod resolve-key :default [_ v] v)
 
-(defmulti prep-key
-  "Prepare the configuration associated with a key for initiation. This is
-  generally used to add in default values and references. By default the
-  method returns the value unaltered."
-  {:deprecated "0.9.0", :arglists '([key value])}
-  (fn [key _value] (normalize-key key)))
-
-(defmethod prep-key :default [_ v] v)
-
 (defmulti expand-key
   "Expand a config value into a map that is then merged back into the config.
   Defaults to returning a map `{key value}`. See: [[expand]]."
@@ -548,21 +539,6 @@
   (try (assert-key key value)
        (catch #?(:clj Throwable :cljs :default) err
          (throw (wrap-assert-exception err system key value)))))
-
-(defn prep
-  "Prepare a config map for initiation. The [[prep-key]] method is applied to
-  each entry in the map, and the values replaced with the return value. This is
-  used for adding default values and references to the configuration.
-
-  Deprecated in favor of [[expand]]."
-  {:deprecated "0.9.0"}
-  ([config]
-   (prep config (keys config)))
-  ([config keys]
-   {:pre [(map? config)]}
-   (let [keyset (set keys)]
-     (reduce-kv (fn [m k v] (assoc m k (if (keyset k) (prep-key k v) v)))
-                {} config))))
 
 (defn- missing-profile-key-exception [profile keys]
   (ex-info (str "Missing a valid key for profile: #ig/profile "

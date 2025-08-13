@@ -7,9 +7,6 @@
 
 (def log (atom []))
 
-(defmethod ig/prep-key ::p [_ v]
-  (merge {:a (ig/ref ::a)} v))
-
 (defmethod ig/expand-key ::mod   [_ v] {::a v, ::b {:v v}})
 (defmethod ig/expand-key ::mod-a [_ v] {::a v})
 (defmethod ig/expand-key ::mod-b [_ v] {::b {:v v}})
@@ -252,19 +249,6 @@
   (testing "composite key"
     (is (= (ig/find-derived {::a "x" [::b ::x] "y", [::b ::y] "z"} ::b)
            [[[::b ::x] "y"] [[::b ::y] "z"]]))))
-
-(deftest prep-test
-  (testing "default"
-    (is (= (ig/prep {::q {:b 2}, ::a 1})
-           {::q {:b 2}, ::a 1})))
-
-  (testing "custom prep-key"
-    (is (= (ig/prep {::p {:b 2}, ::a 1})
-           {::p {:a (ig/ref ::a), :b 2}, ::a 1})))
-
-  (testing "prep then init"
-    (is (= (ig/init (ig/prep {::p {:b 2}, ::a 1}))
-           {::p [{:a [1], :b 2}], ::a [1]}))))
 
 (deftest converge-test
   (testing "merge"
