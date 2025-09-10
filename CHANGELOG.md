@@ -1,3 +1,7 @@
+## 1.0.0 (2025-09-10)
+
+* Functionally the same as 1.0.0-RC2
+
 ## 1.0.0-RC2 (2025-08-13)
 
 * Updated `weavejester/dependency` to 1.0.0
