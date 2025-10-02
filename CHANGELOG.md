@@ -1,3 +1,7 @@
+## 1.0.1 (2025-10-02)
+
+* Fixed composite keys not working with default `init-key` (#114)
+
 ## 1.0.0 (2025-09-10)
 
 * Functionally the same as 1.0.0-RC2
