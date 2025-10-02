@@ -476,15 +476,22 @@
   (fn [key _value] (normalize-key key)))
 
 #?(:clj
+   (defn- find-key-init-fn [k]
+     (when (qualified-keyword? k)
+       (let [sym (symbol (namespace k) (name k))]
+         (some-> (find-var sym) var-get)))))
+
+#?(:clj
    (defmethod init-key :default [k v]
-     (let [sym (symbol (namespace k) (name k))]
-       (if-some [var (find-var sym)]
-         ((var-get var) v)
-         (throw (ex-info
-                 (str "Unable to find an init-key method or function for " k)
-                 {:reason ::missing-init-key
-                  :key    k
-                  :value  v}))))))
+     (if-some [f (if (vector? k)
+                   (some find-key-init-fn k)
+                   (find-key-init-fn k))]
+       (f v)
+       (throw (ex-info
+               (str "Unable to find an init-key method or function for " k)
+               {:reason ::missing-init-key
+                :key    k
+                :value  v})))))
 
 (defmulti halt-key!
   "Halt a running or suspended implementation associated with a key. This is

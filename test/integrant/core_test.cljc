@@ -459,6 +459,8 @@
      (testing "default functions"
        (is (= (ig/init {::init-example "foo"})
               {::init-example "initfoo"}))
+       (is (= (ig/init {[::init-example ::undefined-composite] "foo"})
+              {[::init-example ::undefined-composite] "initfoo"}))
        (is (thrown-with-msg?
             clojure.lang.ExceptionInfo
             (re-pattern (str "Error on key " ::init-examplo
