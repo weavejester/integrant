@@ -435,7 +435,7 @@ It's sometimes useful for expansions to be given profiles. For example:
    :dev  {:adapter.jetty {:port 8080, :handler (ig/ref :handler/debug)}
           :handler/debug {:name name}}
    :prod {:adapter/jetty {:port 80, :handler (ig/ref :handler/greet)}
-          :handler/greet {:name name}})
+          :handler/greet {:name name}}))
 ```
 
 The expansion generated depends on the profile used. To use this, the
