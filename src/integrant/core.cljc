@@ -115,7 +115,9 @@
 (defn reflike?
   "Return true if its argument is a ref or a refset."
   [x]
-  (satisfies? RefLike x))
+  ;; satisfies? is slow on the JVM for values that do not implement the protocol
+  #?(:clj  (instance? integrant.core.RefLike x)
+     :cljs (satisfies? RefLike x)))
 
 (defrecord Profile [])
 

@@ -88,6 +88,16 @@
   (is (ig/reflike? (ig/refset ::foo)))
   (is (ig/reflike? (ig/refset [::foo ::bar]))))
 
+(deftest reflike-test
+  (are [x] (not (ig/reflike? x))
+    nil
+    ::foo
+    "foo"
+    {:key ::foo}
+    [(ig/ref ::foo)]
+    (ig/profile :dev 1)
+    (ig/var 'foo)))
+
 (deftest composite-keyword-test
   (let [k (ig/composite-keyword [::a ::b])]
     (is (isa? k ::a))
